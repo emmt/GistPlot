@@ -1,0 +1,23 @@
+# generic build files (probably also in global .gitignore)
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.a
+*.so
+*~
+/#*
+core
+a.out
+*.dSYM/
+
+# specific build/work files, see also .gitignore in subdirectories
+tools/
+Make.cfg
+cfg*
+*.doc
+libnplay
+libngist
+numfmt
+*.orig
