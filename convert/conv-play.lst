@@ -1,0 +1,440 @@
+#
+# conv-play.lst -
+#
+# Rules to convert symbols from Play to Play2.
+#
+# Empty lines and comments (after a #) are ignored.
+# Automatic conversions (prefix 'p_' to 'pl_' and 'P_' to 'PL_' are not applied here).
+#
+# FIXME: remove p_frall
+# FIXME: remove p_lsdir pl_lsdir
+# FIXME: remove version.h and PL_Y_VERSION
+#
+ Y_VERSION PL_Y_VERSION
+ yorapi    exports
+
+# PLAY headers
+ play\.h    play2.h
+ pstdio\.h  play/io.h
+ pstdlib\.h play/std.h
+ phash\.h   play/hash.h
+ plugin\.h  play/extern.h
+ pmin\.h    play/events.h
+ playwin\.h play/win.h
+
+# PLAY libraries
+ lplay      lplay2
+ libplay\.a libplay2.a
+ lgist      lgist2
+ libgist\.a libgist2.a
+
+# GIST headers
+ gist\.h    gist2.h
+ cgm\.h     gist/cgm.h
+ cgmin\.h   gist/cgmin.h
+ clip\.h    gist/clip.h
+ draw\.h    gist/draw.h
+ engine\.h  gist/engine.h
+ eps\.h     gist/eps.h
+ gtext\.h   gist/text.h
+ hlevel\.h  gist/hlevel.h
+ ps\.h      gist/ps.h
+ xbasic\.h  gist/xbasic.h
+ xfancy\.h  gist/xfancy.h
+
+# fix typo
+ ASCI ASCII
+
+# in plugin.h -> play/extern.h
+ PLUGIN_H       _PLAY_EXTERN_H
+ BEGIN_EXTERN_C PL_BEGIN_EXTERN_C
+ END_EXTERN_C   PL_END_EXTERN_C
+ PLUG_API       PL_EXTERN
+ PLUG2_API      PL__EXTERN
+ PLUG_EXPORT    PL_EXPORT
+ PLUG_IMPORT    PL_IMPORT
+ PLUG_IN        PL_PLUGIN
+
+# in play.h -> play2.h
+ _PLAY_H        _PLAY2_H
+#p_quit         pl_quit
+#p_abort        pl_abort
+#p_qclear       pl_qclear
+#p_stdout       pl_stdout
+#p_stderr       pl_stderr
+#p_wall_secs    pl_wall_secs
+#p_cpu_secs     pl_cpu_secs
+#p_getenv       pl_getenv
+#p_getuser      pl_getuser
+#p_signalling   pl_signalling
+#p_fpehandling  pl_fpehandling
+# FIXME: USE_SOFTFPE PL_USE_SOFTFPE
+#P_SOFTFPE_TEST PL_SOFTFPE_TEST
+#p_softfpe      pl_softfpe
+ p_scr          pl_scr_t
+ p_win          pl_win_t
+#p_col_t        pl_col_t
+#p_quitter      pl_quitter
+#p_stdinit      pl_stdinit
+#p_handler      pl_handler
+#p_gui          pl_gui
+#p_gui_query    pl_gui_query
+#p_on_connect   pl_on_connect
+#p_spawn_t      pl_spawn_t
+#p_spawn        pl_spawn
+#p_recv         pl_recv
+#p_send         pl_send
+#p_spawf        pl_spawf
+ psckt_t        pl_sckt_t
+ psckt_cb_t     pl_sckt_cb_t
+ psckt_listen   pl_sckt_listen
+ psckt_accept   pl_sckt_accept
+ psckt_connect  pl_sckt_connect
+ psckt_recv     pl_sckt_recv
+ psckt_send     pl_sckt_send
+ psckt_close    pl_sckt_close
+#p_connect      pl_connect
+#p_disconnect   pl_disconnect
+#p_multihead    pl_multihead
+#p_txwidth      pl_txwidth
+#p_txheight     pl_txheight
+#p_sshape       pl_sshape
+#p_wincount     pl_wincount
+#p_winloc       pl_winloc
+#p_window       pl_window
+#p_subwindow    pl_subwindow
+#p_menu         pl_menu
+#p_offscreen    pl_offscreen
+#p_metafile     pl_metafile
+#p_destroy      pl_destroy
+#p_scopy        pl_scopy
+#p_spaste       pl_spaste
+#p_feep         pl_feep
+#p_flush        pl_flush
+#p_clear        pl_clear
+#p_resize       pl_resize
+#p_raise        pl_raise
+#p_cursor       pl_cursor
+#p_palette      pl_palette
+#p_clip         pl_clip
+#p_color        pl_color
+#p_font         pl_font
+#p_pen          pl_pen
+#p_i_pnts       pl_i_pnts
+#p_d_pnts       pl_d_pnts
+#p_d_map        pl_d_map
+#p_text         pl_text
+#p_rect         pl_rect
+#p_ellipse      pl_ellipse
+#p_dots         pl_dots
+#p_segments     pl_segments
+#p_lines        pl_lines
+#p_fill         pl_fill
+#p_ndx_cell     pl_ndx_cell
+#p_rgb_cell     pl_rgb_cell
+#p_bitblt       pl_bitblt
+#p_rgb_read     pl_rgb_read
+#p_idler        pl_idler
+#p_on_idle      pl_on_idle
+#p_timeout      pl_timeout
+#p_set_alarm    pl_set_alarm
+#p_clr_alarm    pl_clr_alarm
+#p_bit_rev      pl_bit_rev
+#p_lrot180      pl_lrot180
+#p_lrot090      pl_lrot090
+#p_lrot270      pl_lrot270
+#p_mrot180      pl_mrot180
+#p_mrot090      pl_mrot090
+#p_mrot270      pl_mrot270
+#p_595          pl_595
+
+# on_exception arguments
+ PSIG_NONE  PL_SIG_NONE
+ PSIG_SOFT  PL_SIG_SOFT
+ PSIG_INT   PL_SIG_INT
+ PSIG_FPE   PL_SIG_FPE
+ PSIG_SEGV  PL_SIG_SEGV
+ PSIG_ILL   PL_SIG_ILL
+ PSIG_BUS   PL_SIG_BUS
+ PSIG_IO    PL_SIG_IO
+ PSIG_OTHER PL_SIG_OTHER
+
+# window hints
+#P_PRIVMAP  PL_PRIVMAP
+#P_NOKEY    PL_NOKEY
+#P_NOMOTION PL_NOMOTION
+#P_NORESIZE PL_NORESIZE
+#P_DIALOG   PL_DIALOG
+#P_MODAL    PL_MODAL
+#P_RGBMODEL PL_RGBMODEL
+
+# cursors
+#P_SELECT    PL_SELECT
+#P_CROSSHAIR PL_CROSSHAIR
+#P_TEXT      PL_TEXT
+#P_N         PL_N
+#P_S         PL_S
+#P_E         PL_E
+#P_W         PL_W
+#P_NS        PL_NS
+#P_EW        PL_EW
+#P_NSEW      PL_NSEW
+#P_ROTATE    PL_ROTATE
+#P_DEATH     PL_DEATH
+#P_HAND      PL_HAND
+#P_NONE      PL_NONE
+
+# colors
+#P_IS_NDX  PL_IS_NDX
+#P_IS_RGB  PL_IS_RGB
+#P_R       PL_R
+#P_G       PL_G
+#P_B       PL_B
+#P_RGB     PL_RGB
+#P_BG      PL_BG
+#P_FG      PL_FG
+#P_BLACK   PL_BLACK
+#P_WHITE   PL_WHITE
+#P_RED     PL_RED
+#P_GREEN   PL_GREEN
+#P_BLUE    PL_BLUE
+#P_CYAN    PL_CYAN
+#P_MAGENTA PL_MAGENTA
+#P_YELLOW  PL_YELLOW
+#P_GRAYD   PL_GRAYD
+#P_GRAYC   PL_GRAYC
+#P_GRAYB   PL_GRAYB
+#P_GRAYA   PL_GRAYA
+#P_XOR     PL_XOR
+#P_EXTRA   PL_EXTRA
+ GRAYA     PL_GRAYA
+ GRAYD     PL_GRAYD
+
+# fonts
+#P_COURIER    PL_COURIER
+#P_TIMES      PL_TIMES
+#P_HELVETICA  PL_HELVETICA
+#P_SYMBOL     PL_SYMBOL
+#P_NEWCENTURY PL_NEWCENTURY
+#P_GUI_FONT   PL_GUI_FONT
+#P_BOLD       PL_BOLD
+#P_ITALIC     PL_ITALIC
+#P_OPAQUE     PL_OPAQUE
+
+# line types
+#P_SOLID      PL_SOLID
+#P_DASH       PL_DASH
+#P_DOT        PL_DOT
+#P_DASHDOT    PL_DASHDOT
+#P_DASHDOTDOT PL_DASHDOTDOT
+#P_SQUARE     PL_SQUARE
+
+# mouse buttons and shift keys
+#P_BTN1    PL_BTN1
+#P_BTN2    PL_BTN2
+#P_BTN3    PL_BTN3
+#P_BTN4    PL_BTN4
+#P_BTN5    PL_BTN5
+#P_SHIFT   PL_SHIFT
+#P_CONTROL PL_CONTROL
+#P_META    PL_META
+#P_ALT     PL_ALT
+#P_COMPOSE PL_COMPOSE
+#P_KEYPAD  PL_KEYPAD
+
+# keys beyond ASCII
+#P_LEFT   PL_LEFT
+#P_RIGHT  PL_RIGHT
+#P_UP     PL_UP
+#P_DOWN   PL_DOWN
+#P_PGUP   PL_PGUP
+#P_PGDN   PL_PGDN
+#P_HOME   PL_HOME
+#P_END    PL_END
+#P_INSERT PL_INSERT
+#P_F0     PL_F0
+#P_F1     PL_F1
+#P_F2     PL_F2
+#P_F3     PL_F3
+#P_F4     PL_F4
+#P_F5     PL_F5
+#P_F6     PL_F6
+#P_F7     PL_F7
+#P_F8     PL_F8
+#P_F9     PL_F9
+#P_F10    PL_F10
+#P_F11    PL_F11
+#P_F12    PL_F12
+
+# miscellaneous
+#P_DEBUG PL_DEBUG
+
+# memory management (pstdlib.h -> play/std.h)
+#p_malloc     pl_malloc
+#p_free       pl_free
+#p_realloc    pl_realloc
+#p_mmcheck    pl_mmcheck
+#p_mmdebug    pl_mmdebug
+#p_mmextra    pl_mmextra
+#p_mmguard    pl_mmguard
+#p_mminit     pl_mminit
+#p_mmoffset   pl_mmoffset
+#p_nallocs    pl_nallocs
+#p_nfrees     pl_nfrees
+#p_nsmall     pl_nsmall
+#p_asmall     pl_asmall
+#p_mmfail     pl_mmfail
+#P_WKSIZ      PL_WKSIZ
+ p_twkspc     pl_wkspc_t
+#p_wkspc      pl_wkspc
+#p_memcpy     pl_memcpy
+#p_strcpy     pl_strcpy
+#p_strncat    pl_strncat
+#p_native     pl_native
+#p_dlopen     pl_dlopen
+#p_dlsym      pl_dlsym
+#p_system     pl_system
+
+# filesystem services (pstdio.h -> play/io.h)
+ PSTDIO_H   _PLAY_IO_H
+ p_file     pl_file_t
+ p_dir      pl_dir_t
+ p_file_ops pl_file_ops_t
+#p_fopen    pl_fopen
+#p_popen    pl_popen
+#p_fd_raw   pl_fd_raw
+#p_fsize    pl_fsize
+#p_ftell    pl_ftell
+#p_fseek    pl_fseek
+#p_fgets    pl_fgets
+#p_fputs    pl_fputs
+#p_fread    pl_fread
+#p_fwrite   pl_fwrite
+#p_feof     pl_feof
+#p_ferror   pl_ferror
+#p_fflush   pl_fflush
+#p_fclose   pl_fclose
+#p_remove   pl_remove
+#p_rename   pl_rename
+#p_chdir    pl_chdir
+#p_rmdir    pl_rmdir
+#p_mkdir    pl_mkdir
+#p_getcwd   pl_getcwd
+#p_dopen    pl_dopen
+#p_dclose   pl_dclose
+#p_dnext    pl_dnext
+
+# hash tables (phash -> play/hash.h)
+#P_IHASH    PL_IHASH
+#P_PHASH    PL_PHASH
+ p_hashkey  pl_hashkey_t
+ p_hashtab  pl_hashtab_t
+#p_hmasks   pl_hmasks
+#p_halloc   pl_halloc
+#p_hfree    pl_hfree
+#p_hinsert  pl_hinsert
+#p_hfind    pl_hfind
+#p_hiter    pl_hiter
+#p_id       pl_id
+#p_idfree   pl_idfree
+#p_idmake   pl_idmake
+#p_idname   pl_idname
+#p_idstatic pl_idstatic
+#p_setctx   pl_setctx
+#p_getctx   pl_getctx
+
+# in pmin.h -> play/events.h
+#p_pending_events pl_pending_events
+#p_wait_while     pl_wait_while
+#p_xhandler       pl_xhandler
+#p_wait_stdin     pl_wait_stdin
+
+# in playwin.h -> play/win.h
+ N_FONT_CACHE   PL_FONTS_CACHED
+ W_FONTS_CACHED PL_FONTS_CACHED
+ x_display      pl_x_display_t
+ x_cshared      pl_x_cshared_t
+ x_displays     _pl_x_displays
+ x_rgb_palette  _pl_x_rgb_palette
+ w_linker       _pl_w_linker
+
+# Exported private symbols in play/unix.
+ u_closeall      _pl_u_closeall
+ u_event_src     _pl_u_event_src
+ u_fdwatch       _pl_u_fdwatch
+ u_fgets         _pl_u_fgets
+ u_find_exe      _pl_u_find_exe
+ u_fpu_setup     _pl_u_fpu_setup
+ u_getc          _pl_u_getc
+ u_in_background _pl_u_in_background
+ u_main_loop     _pl_u_main_loop
+ u_pathname      _pl_u_pathname
+ u_poll          _pl_u_poll
+ u_poll1         _pl_u_poll1
+ u_prepoll       _pl_u_prepoll
+ u_sigfpe        _pl_u_sigfpe
+ u_track_link    _pl_u_track_link
+ u_waiter        _pl_u_waiter
+ u_waitfor       _pl_u_waitfor
+
+# Exported private symbols in play/x11.
+ x_clip          _pl_x_clip
+ x_cmzap         _pl_x_cmzap
+ x_cursor        _pl_x_cursor
+ x_dpy           _pl_x_dpy
+ x_err_handler   _pl_x_err_handler
+ x_font          _pl_x_font
+ x_gczap         _pl_x_gczap
+ x_getgc         _pl_x_getgc
+ x_getpixel      _pl_x_getpixel
+ x_imzap         _pl_x_imzap
+ x_nuke_shared   _pl_x_nuke_shared
+ x_panic         _pl_x_panic
+ x_parse_fonts   _pl_x_parse_fonts
+ x_pwin          _pl_x_pwin
+ x_pxzap         _pl_x_pxzap
+#x_rgb_palette   _pl_x_rgb_palette
+ x_rotzap        _pl_x_rotzap
+ x_tmpzap        _pl_x_tmpzap
+
+# Exported private symbols in play/win.
+ w_worker       _pl_w_worker
+ w_work_idle    _pl_w_work_idle
+ w_winproc      _pl_w_winproc
+ w_win_class    _pl_w_win_class
+ w_unixpath     _pl_w_unixpath
+ w_stdinit      _pl_w_stdinit
+ w_sigint       _pl_w_sigint
+ w_siginit      _pl_w_siginit
+ w_sendbuf      _pl_w_sendbuf
+ w_screen       _pl_w_screen
+ w_pt_list      _pl_w_pt_list
+ w_pt_count     _pl_w_pt_count
+ w_protect      _pl_w_protect
+ w_prepoll      _pl_w_prepoll
+ w_pollinit     _pl_w_pollinit
+ w_pathname     _pl_w_pathname
+ w_parent       _pl_w_parent
+ w_on_quit      _pl_w_on_quit
+ w_nwins        _pl_w_nwins
+ w_no_mdi       _pl_w_no_mdi
+ w_msg_hook     _pl_w_msg_hook
+ w_menu_class   _pl_w_menu_class
+ w_main_window  _pl_w_main_window
+ w_initialize   _pl_w_initialize
+ w_id_worker    _pl_w_id_worker
+ w_getdc        _pl_w_getdc
+ w_fpu_setup    _pl_w_fpu_setup
+ w_deliver      _pl_w_deliver
+ w_cursor       _pl_w_cursor
+ w_color        _pl_w_color
+ w_caught       _pl_w_caught
+ w_app_msg      _pl_w_app_msg
+ w_app_instance _pl_w_app_instance
+ w_add_msg      _pl_w_add_msg
+ w_add_input    _pl_w_add_input
+ w_abort_hook   _pl_w_abort_hook
+
+# types
+ p_alarm   pl_alarm_t
+ p_hashent pl_hashent_t

@@ -1,0 +1,431 @@
+# List of symbol conversions for Gist.
+#
+# The objective is to have uniform naming conventions, here snake case style,
+# and prefixes to avoid name conflicts.  The prefixes in Gist2 are:
+#
+#  gp_  for primitive routines and global variables
+#  ga_  for advanced routines and global variables
+#  gd_  for display list routines and global variables
+#  gh_  for high level routines and global variables
+#  gx_  for interactive devices
+#  gp_clip_  for helper routines and global variables for clipping
+#  gp_cont_  for helper routines for contours
+
+# gist.h -> gist2.h
+ GIST_H              _GIST2_H
+ GpReal              gp_real_t
+ GpColor             gp_color_t
+ ONE_POINT           GP_ONE_POINT
+ INCHES_PER_POINT    GP_INCHES_PER_POINT
+ ONE_INCH            GP_ONE_INCH
+ gistError           gp_error        # FIXME: global variable
+ gistPathDefault     gp_default_path # FIXME: global variable
+#Engine              gp_engine_t
+ GpPSEngine          gp_new_ps_engine
+ GpCGMEngine         gp_new_cgm_engine
+ GpBXEngine          gp_new_bx_engine
+ GpFXEngine          gp_new_fx_engine
+ GpKillEngine        gp_kill_engine
+
+ GisCGMEngine        gp_cgm_engine
+ GisPSEngine         gp_ps_engine
+ GisXEngine          gp_x_engine
+
+ gist_input_hint     gp_input_hint   # FIXME: global variable
+ gist_private_map    gp_private_map  # FIXME: global variable
+ gist_rgb_hint       gp_rgb_hint     # FIXME: global variable
+ g_initializer       gp_initializer
+ g_set_path          gp_set_path
+ g_on_keyline        gp_on_keyline
+ g_stdout            gp_stdout
+ g_callbacks         gp_callbacks_t
+ gist_expose_wait    gp_expose_wait
+ GpActivate          gp_activate
+ GpDeactivate        gp_deactivate
+ GpPreempt           gp_preempt
+ GpActive            gp_is_active
+ GpClear             gp_clear
+ CONDITIONALLY       GP_CONDITIONALLY
+ ALWAYS              GP_ALWAYS
+ GpFlush             gp_flush
+ GpNextEngine        gp_next_engine
+ GpNextActive        gp_next_active_engine
+ GpBox               gp_box_t
+ GpTransform         gp_transform_t
+ GpSetTrans          gp_set_transform
+ GpLandscape         gp_set_landscape
+ gistT               gp_transform  # FIXME: global variable
+ gistClip            gp_clipping # FIXME: global variable, boolean
+ GpMap               gp_map_t
+ GpXYMap             gp_xymap_t
+ GpSetMap            gp_set_map
+ gPortrait           gp_portrait_box # FIXME: global variable
+ gLandscape          gp_landscape_box  # FIXME: global variable
+ GpIntersect         gp_intersect
+ GpContains          gp_contains
+ GpSwallow           gp_swallow
+ GpLines             gp_draw_lines
+ GpMarkers           gp_draw_markers
+ GpText              gp_draw_text
+ GpFill              gp_draw_fill
+ GpCells             gp_draw_cells
+ GpDisjoint          gp_draw_disjoint
+
+# line attributes
+ GpLineAttribs       gp_line_attribs_t
+ L_NONE              GP_LINE_NONE
+ L_SOLID             GP_LINE_SOLID
+ L_DASH              GP_LINE_DASH
+ L_DOT               GP_LINE_DOT
+ L_DASHDOT           GP_LINE_DASHDOT
+ L_DASHDOTDOT        GP_LINE_DASHDOTDOT
+ DEFAULT_LINE_WIDTH  GP_DEFAULT_LINE_WIDTH
+ DEFAULT_LINE_INCHES GP_DEFAULT_LINE_INCHES
+
+# marker attributes
+ GpMarkerAttribs     gp_marker_attribs_t
+ M_POINT             GP_MARKER_POINT
+ M_PLUS              GP_MARKER_PLUS
+ M_ASTERISK          GP_MARKER_ASTERISK
+ M_CIRCLE            GP_MARKER_CIRCLE
+ M_CROSS             GP_MARKER_CROSS
+ DEFAULT_MARKER_SIZE GP_DEFAULT_MARKER_SIZE
+
+# fill attributes
+ GpFillAttribs       gp_fill_attribs_t
+ F_HOLLOW            GP_FILL_HOLLOW
+ F_SOLID             GP_FILL_SOLID
+ F_PATTERN           GP_FILL_PATTERN
+ F_HATCH             GP_FILL_HATCH
+ F_EMPTY             GP_FILL_EMPTY
+
+# text attributes
+ GpTextAttribs       gp_text_attribs_t
+ T_BOLD              GP_FONT_BOLD
+ T_ITALIC            GP_FONT_ITALIC
+ T_COURIER           GP_FONT_COURIER
+ T_TIMES             GP_FONT_TIMES
+ T_HELVETICA         GP_FONT_HELVETICA
+ T_SYMBOL            GP_FONT_SYMBOL
+ T_NEWCENTURY        GP_FONT_NEWCENTURY
+ TX_RIGHT            GP_ORIENT_RIGHT
+ TX_UP               GP_ORIENT_UP
+ TX_LEFT             GP_ORIENT_LEFT
+ TX_DOWN             GP_ORIENT_DOWN
+ TH_NORMAL           GP_HORIZ_ALIGN_NORMAL
+ TH_LEFT             GP_HORIZ_ALIGN_LEFT
+ TH_CENTER           GP_HORIZ_ALIGN_CENTER
+ TH_RIGHT            GP_HORIZ_ALIGN_RIGHT
+ TV_NORMAL           GP_VERT_ALIGN_NORMAL
+ TV_TOP              GP_VERT_ALIGN_TOP
+ TV_CAP              GP_VERT_ALIGN_CAP
+ TV_HALF             GP_VERT_ALIGN_HALF
+ TV_BASE             GP_VERT_ALIGN_BASE
+ TV_BOTTOM           GP_VERT_ALIGN_BOTTOM
+
+# line attributes (A level)
+ GaLineAttribs        ga_line_attribs_t
+ DEFAULT_ARROW_LENGTH GA_DEFAULT_ARROW_LENGTH
+ DEFAULT_ARROW_WIDTH  GA_DEFAULT_ARROW_WIDTH
+ GaVectAttribs        ga_vect_attribs_t
+ GaAttributes         ga_attributes_t
+ gistA                ga_attributes  # FIXME: global variable
+ GaAxisStyle          ga_axis_style_t
+ TICK_LEVELS          GA_TICK_LEVELS
+ TICK_L               GA_TICK_L
+ TICK_U               GA_TICK_U
+ TICK_C               GA_TICK_C
+ TICK_IN              GA_TICK_IN
+ TICK_OUT             GA_TICK_OUT
+ LABEL_L              GA_LABEL_L
+ LABEL_U              GA_LABEL_U
+ GRID_F               GA_GRID_F
+ GRID_O               GA_GRID_O
+ ALT_TICK             GA_ALT_TICK
+ ALT_LABEL            GA_ALT_LABEL
+ GaTickStyle          ga_tick_style_t
+ GaLines              ga_draw_lines
+ GaQuadMesh           ga_mesh_t
+ GaMesh               ga_draw_mesh
+ GaFillMesh           ga_fill_mesh
+ GaFillMarker         ga_fill_marker
+ GaVectors            ga_draw_vectors
+ GaContourInit        ga_init_contour
+ GaContour            ga_draw_contour
+ GaTicks              ga_draw_ticks
+ GaFreeScratch        ga_free_scratch
+ GaAltTicks           ga_ticker_t
+ GaAltLabel           ga_labeler_t
+ Base60Ticks          ga_base60_ticker
+ DegreeLabels         ga_degree_labeler
+ HourLabels           ga_hour_labeler
+ GaAltTick            ga_draw_alt_ticks
+ GcInit1              gp_cont_init1
+ GcInit2              gp_cont_init2
+ GcTrace              gp_cont_trace
+ Drauing              gd_drawing_t
+ GdNewDrawing         gd_new_drawing
+ GdKillDrawing        gd_kill_drawing
+ GdSetDrawing         gd_set_drawing
+ GdClear              gd_clear
+ GdDraw               gd_draw
+ GdLines              gd_add_lines
+ GdDisjoint           gd_add_disjoint
+ GdText               gd_add_text
+ GdCells              gd_add_cells
+ GdFill               gd_add_fill
+ GdMesh               gd_add_mesh
+ GdFillMesh           gd_add_fillmesh
+ GdVectors            gd_add_vectors
+ GdContours           gd_add_contours
+ NOCOPY_MESH          GD_NOCOPY_MESH
+ NOCOPY_COLORS        GD_NOCOPY_COLORS
+ NOCOPY_UV            GD_NOCOPY_UV
+ NOCOPY_Z             GD_NOCOPY_Z
+ NOCOPY_REG           GD_NOCOPY_REG
+ NOCOPY_TRI           GD_NOCOPY_TRI
+ E_NONE               GD_ELEM_NONE
+ E_LINES              GD_ELEM_LINES
+ E_DISJOINT           GD_ELEM_DISJOINT
+ E_TEXT               GD_ELEM_TEXT
+ E_MESH               GD_ELEM_MESH
+ E_FILLED             GD_ELEM_FILLED
+ E_VECTORS            GD_ELEM_VECTORS
+ E_CONTOURS           GD_ELEM_CONTOURS
+ E_CELLS              GD_ELEM_CELLS
+ E_POLYS              GD_ELEM_POLYS
+ E_SYSTEM             GD_ELEM_SYSTEM
+ GdProperties         gd_properties_t
+ D_XMIN               GD_LIM_XMIN
+ D_XMAX               GD_LIM_XMAX
+ D_YMIN               GD_LIM_YMIN
+ D_YMAX               GD_LIM_YMAX
+ D_RESTRICT           GD_LIM_RESTRICT
+ D_NICE               GD_LIM_NICE
+ D_SQUARE             GD_LIM_SQUARE
+ D_LOGX               GD_LIM_LOGX
+ D_LOGY               GD_LIM_LOGY
+ D_ZOOMED             GD_LIM_ZOOMED
+ gistD                gd_properties # FIXME: global variable
+ GdSetSystem          gd_set_system
+ GdSetElement         gd_set_element
+ GdSetContour         gd_set_contour
+ GdGetSystem          gd_get_system
+ GdFindIndex          gd_find_index
+ GdFindSystem         gd_find_system
+ GdEdit               gd_edit
+ CHANGE_XY            GD_CHANGE_XY
+ CHANGE_Z             GD_CHANGE_Z
+ GdRemove             gd_remove
+ GdGetLimits          gd_get_limits
+ GdSetLimits          gd_set_limits
+ GdSetPort            gd_set_viewport
+ GdSaveLimits         gd_save_limits
+ GdRevertLimits       gd_revert_limits
+ GdAltTick            gd_set_alt_ticker
+ GdDrawLegends        gd_draw_legends
+ GdReadStyle          gd_read_style
+ GdNewSystem          gd_new_system
+ GdLandscape          gd_set_landscape
+ GdLegendBox          gd_set_legend_box
+ GdDetach             gd_detach
+ GdClearSystem        gd_clear_system
+
+# color
+ BG_COLOR             PL_BG
+ FG_COLOR             PL_FG
+ BLACK_COLOR          PL_BLACK
+ WHITE_COLOR          PL_WHITE
+ RED_COLOR            PL_RED
+ GREEN_COLOR          PL_GREEN
+ BLUE_COLOR           PL_BLUE
+ CYAN_COLOR           PL_CYAN
+ MAGENTA_COLOR        PL_MAGENTA
+ YELLOW_COLOR         PL_YELLOW
+ GpColorCell          pl_col_t
+ GpPutGray            gp_put_gray
+ GpPutNTSC            gp_put_ntsc
+ GpPutRGB             gp_put_rgb
+ GpSetPalette         gp_set_palette
+ GpGetPalette         gp_get_palette
+ GpReadPalette        gp_read_palette
+ GpDumpColors         gp_dump_colors
+
+# error handler
+ GpSetXHandler        gp_set_xhandler
+
+# memory management
+ GdFree               gd_free
+
+# gist/cgm.h
+ CGM_H          _GIST_CGM_H
+ Octet          gp_octet_t
+ MAX_PARTITION  GP_MAX_CGM_PARTITION
+ CGMEngine      gp_cgm_engine_t
+ gCGMScale      gp_cgm_scale # FIXME: global variable
+ gCGMFileSize   gp_cgm_file_size # FIXME: global variable
+ GcgmSetScale   gp_cgm_set_scale
+ g_cgm_on       cgm_on
+
+# gist/cgmin.h
+ CGMIN_H        _GIST_CGMIN_H
+ OpenCGM        gp_open_cgm
+ ReadCGM        gp_read_cgm
+ CGMRelative    gp_cgm_relative
+ CGMinfo        gp_cgm_info
+ CatalogCGM     gp_catalog_cgm
+ Warning        gp_cgm_warning
+ amBatch        gp_cgm_is_batch # FIXME: global variable
+ cgmLandscape   gp_cgm_landscape # FIXME: global variable
+ outEngines     gp_cgm_out_engines # FIXME: global variable
+ outTypes       gp_cgm_out_types # FIXME: global variable
+ bg0fg1         gp_cgm_bg0fg1 # FIXME: global variable
+
+# gist/clip.h
+ CLIP_H         _GIST_CLIP_H
+ xClip          gp_xclip # FIXME: global variable
+ yClip          gp_yclip # FIXME: global variable
+ xClip1         gp_xclip1 # FIXME: global variable
+ yClip1         gp_yclip1 # FIXME: global variable
+ ClipFreeWS     gp_clip_free_workspace
+ ClipSetup      gp_clip_setup
+ ClipBegin      gp_clip_begin
+ ClipMore       gp_clip_more
+ ClipPoints     gp_clip_points
+ ClipFilled     gp_clip_filled
+ ClipDisjoint   gp_clip_disjoint
+ ClipTest       gp_clip_test
+
+# gist/draw.h
+ DRAW_H        _GIST_DRAW_H
+ GdOpTable     gd_operations_t
+ GdElement     gd_element_t
+ GeLines       ge_lines_t # FIXME: use gd_ prefix?
+ GeDisjoint    ge_disjoint_t # FIXME: use gd_ prefix?
+ GeText        ge_text_t # FIXME: use gd_ prefix?
+ GeCells       ge_cells_t # FIXME: use gd_ prefix?
+ GePolys       ge_polys_t # FIXME: use gd_ prefix?
+ GeMesh        ge_mesh_t # FIXME: use gd_ prefix?
+ GeFill        ge_fill_t # FIXME: use gd_ prefix?
+ GeVectors     ge_vectors_t # FIXME: use gd_ prefix?
+ GeContours    ge_contours_t # FIXME: use gd_ prefix?
+ GeSystem      ge_system_t # FIXME: use gd_ prefix?
+ GeLegendBox   ge_legend_box_t # FIXME: use gd_ prefix?
+ gistDrawList  gd_draw_list # FIXME: global variable
+ GeAddElement  ge_add_element # FIXME: use gd_ prefix?
+ GeMarkForScan ge_mark_for_scan # FIXME: use gd_ prefix?
+ GeGetMesh     ge_get_mesh # FIXME: use gd_ prefix?
+ GdScan        gd_scan
+ GdBeginDr     _gd_begin_dr
+ GdBeginSy     _gd_begin_sy
+ GdBeginEl     _gd_begin_el
+ GdEndDr       _gd_end_dr
+
+# gist/engine.h
+ ENGINE_H        _GIST_ENGINE_H
+ Engine          gp_engine_t
+ gistEngines     gp_engines # FIXME: global, can be static
+ gistActive      gp_active_engines # FIXME: global, can be static
+ gistPreempt     gp_preempted_engine # FIXME: global, can be static
+ GpNewEngine     gp_new_engine
+ GpDelEngine     gp_delete_engine
+ GpDeviceMap     gp_set_device_map
+ GpComposeMap    gp_compose_map
+ GpPoint         gp_point_t
+ GpSegment       gp_segment_t
+ GpIntPoints     gp_int_points # FIXME: name?
+ GpIntSegs       gp_int_segments # FIXME: name?
+ GpPseudoMark    gp_draw_pseudo_mark
+ GpClipCells     gp_clip_cells
+ GpDamage        gp_damage
+
+# gist/eps.h
+ EPS_H        _GIST_EPS_H
+ EPSPreview   gp_eps_preview
+ epsFMbug     gp_eps_fm_bug
+
+# gist/ps.h
+ PS_H        _GIST_PS_H
+ GpsBBox     gp_ps_bbox_t
+ PSEngine    gp_ps_engine_t
+
+# gist/gtext.h -> gist/text.h
+ GTEXT_H        _GIST_TEXT_H
+ GtGetAlignment gp_get_text_alignment
+ WidthFunction  gp_text_width_computer_t
+ GtTextShape    gp_get_text_shape
+ GtNextLine     gp_next_text_line
+ gtDoEscapes    gp_do_escapes # FIXME: global variable
+
+# gist/hlevel.h
+ HLEVEL_H        _GIST_HLEVEL_H
+ GhBeforeWait    gh_before_wait
+ GhFMA           gh_fma
+ GhRedraw        gh_redraw
+ GhHCP           gh_hcp
+ GhFMAMode       gh_fma_mode
+ GhDevice        gh_device_t
+#GH_NDEVS        GH_NDEVS
+ ghDevices       gh_devices # FIXME: global variable
+ GhSetPlotter    gh_set_plotter
+ GhGetPlotter    gh_get_plotter
+ hcpDefault      gh_hcp_default
+ GhDumpColors    gh_dump_colors
+ GhSetPalette    gh_set_palette
+ GhReadPalette   gh_read_palette
+ GhGetPalette    gh_get_palette
+ GhGetColorMode  gh_get_colormode
+ SetHCPPalette   gh_set_hcp_palette
+ GhDeletePalette gh_delete_palette
+ GhSetXHandler   gh_set_xhandler
+ GhGetLines      gh_get_lines
+ GhGetText       gh_get_text
+ GhGetMesh       gh_get_mesh
+ GhGetVectors    gh_get_vectors
+ GhGetFill       gh_get_fill
+ GhSetLines      gh_set_lines
+ GhSetText       gh_set_text
+ GhSetMesh       gh_set_mesh
+ GhSetVectors    gh_set_vectors
+ GhSetFill       gh_set_fill
+ gxZoomFactor    gx_zoom_factor # FIXME: duplicate
+ GxPointClick    gx_point_click # FIXME: duplicate
+ gxCurrentEngine gx_current_engine # FIXME: duplicate
+ gxCurrentSys    gx_current_sys # FIXME: duplicate
+ gxCurrentX      gx_current_x # FIXME: duplicate
+ gxCurrentY      gx_current_y # FIXME: duplicate
+ GhGetMouse      gh_get_mouse
+ g_rgb_read      gh_rgb_read # FIXME: duplicate
+ g_on_idle       gh_on_idle # FIXME: can be static
+
+# gist/xbasic.h
+ XBASIC_H         _GIST_XBASIC_H
+ XEngine          gp_x_engine_t
+ g_connect        gx_connect
+ g_disconnect     gx_disconnect # FIXME: can be static
+ gx75width        gx_75dpi_width # FIXME: global
+ gx100width       gx_100dpi_width # FIXME: global
+ DefaultTopWidth  GX_DEFAULT_TOP_WIDTH
+ DefaultTopHeight GX_DEFAULT_TOP_HEIGHT
+ PixelsPerNDC     GX_PIXELS_PER_NDC
+ gx_parent        gx_parent # FIXME: global
+ gx_xloc          gx_xloc # FIXME: global
+ gx_yloc          gx_yloc # FIXME: global
+#gxCurrentEngine  gx_current_engine # FIXME: duplicate
+ GxEngine         gx_new_engine # FIXME: name?
+ GxInput          gx_input
+ GxExpose         gx_expose
+ GxRecenter       gx_recenter
+ GxAnimate        gx_animate
+ GxStrobe         gx_strobe
+ GxDirect         gx_direct
+#g_rgb_read       gh_rgb_read # FIXME: duplicate
+
+# gist/xfancy.h
+ XFANCY_H         _GIST_XFANCY_H
+ FXEngine         gp_fx_engine_t
+#gxZoomFactor     gx_zoom_factor # FIXME: duplicate
+#GxPointClick     gx_point_click # FIXME: duplicate
+#gxCurrentSys     gx_current_sys # FIXME: duplicate
+#gxCurrentX       gx_current_x # FIXME: duplicate
+#gxCurrentY       gx_current_y # FIXME: duplicate
