@@ -9,6 +9,7 @@
  */
 
 #include "gist2.h"
+#include "gist/private.h"
 #include "gist/engine.h"
 #include "gist/clip.h"
 #include "play2.h"
@@ -58,8 +59,8 @@ gp_box_t gp_landscape_box= { 0.0, 1.033461, 0.0, 0.798584 };  /* 11 x 8.5 inches
 char gp_error[128]= ""; /* most recent error message */
 
 static void InitializeClip(void);
-static void MMError(void);
-static int GetScratch(long n);
+static void mem_error(void);
+static int get_scratch(long n);
 static char SwapTextMark(void);
 static void SwapMarkText(void);
 static void SwapNormMap(gp_real_t *scalx, gp_real_t *offx,
@@ -244,76 +245,102 @@ int gp_draw_disjoint(long n, const gp_real_t *px, const gp_real_t *py,
                with contour scratch space)
  */
 
-extern int GaGetScratchP(long n);
-extern int GaGetScratchS(long n);
-extern gp_real_t *gaxScratch, *gayScratch;
-extern short *gasScratch;
-static long nScratchP= 0, nScratchS= 0;
-gp_real_t *gaxScratch, *gayScratch;
-short *gasScratch;
+/* Scratch spaces maintained by _ga_get_scratch_p(), _ga_get_scratch_s()
+   and get_scratch(). */
+gp_real_t* _ga_scratch_x = NULL;
+gp_real_t* _ga_scratch_y = NULL;
+static long n_scratch_p = 0;
 
-static gp_real_t *xScratch, *yScratch;
-static long nScratch= 0;
+short*     _ga_scratch_s = NULL;
+static long n_scratch_s = 0;
 
-static void MMError(void)
+static gp_real_t* scratch_x;
+static gp_real_t* scratch_y;
+static long n_scratch = 0;
+
+static void mem_error(void)
 {
   strcpy(gp_error, "memory manager failed in gist.c function");
 }
 
-int GaGetScratchP(long n)
+int _ga_get_scratch_p(long n)
 {
-  if (n<=nScratchP) return 0;
-  if (nScratchP>0) { pl_free(gaxScratch);  pl_free(gayScratch); }
-  gaxScratch= (gp_real_t *)pl_malloc(sizeof(gp_real_t)*n);
-  gayScratch= (gp_real_t *)pl_malloc(sizeof(gp_real_t)*n);
-  if (!gaxScratch || !gayScratch) {
-    if (gaxScratch) pl_free(gaxScratch);
-    if (gayScratch) pl_free(gayScratch);
-    nScratchP= 0;
-    MMError();
+  if (n <= n_scratch_p) {
+    return 0;
+  }
+  if (n_scratch_p > 0) {
+    n_scratch_p = 0;
+    pl_free(_ga_scratch_x);
+    pl_free(_ga_scratch_y);
+  }
+  _ga_scratch_x = PL_NEW(n, gp_real_t);
+  _ga_scratch_y = PL_NEW(n, gp_real_t);
+  if (_ga_scratch_x == NULL || _ga_scratch_y == NULL) {
+    pl_free(_ga_scratch_x);
+    pl_free(_ga_scratch_y);
+    mem_error();
     return 1;
   }
-  nScratchP= n;
+  n_scratch_p = n;
   return 0;
 }
 
-static int GetScratch(long n)
+static int get_scratch(long n)
 {
-  if (n<=nScratch) return 0;
-  if (nScratch>0) { pl_free(xScratch);  pl_free(yScratch); }
-  xScratch= (gp_real_t *)pl_malloc(sizeof(gp_real_t)*n);
-  yScratch= (gp_real_t *)pl_malloc(sizeof(gp_real_t)*n);
-  if (!xScratch || !yScratch) {
-    if (xScratch) pl_free(xScratch);
-    if (yScratch) pl_free(yScratch);
-    nScratch= 0;
-    MMError();
+  if (n <= n_scratch) {
+    return 0;
+  }
+  if (n_scratch > 0) {
+    n_scratch = 0;
+    pl_free(scratch_x);
+    pl_free(scratch_y);
+  }
+  scratch_x = PL_NEW(n, gp_real_t);
+  scratch_y = PL_NEW(n, gp_real_t);
+  if (scratch_x == NULL || scratch_y == NULL) {
+    pl_free(scratch_x);
+    pl_free(scratch_y);
+    mem_error();
     return 1;
   }
-  nScratch= n;
+  n_scratch = n;
   return 0;
 }
 
-int GaGetScratchS(long n)
+int _ga_get_scratch_s(long n)
 {
-  if (n<=nScratchS) return 0;
-  if (nScratchS>0) pl_free(gasScratch);
-  gasScratch= (short *)pl_malloc(sizeof(short)*n);
-  if (!gasScratch) {
-    nScratchS= 0;
-    MMError();
+  if (n <= n_scratch_s) {
+    return 0;
+  }
+  if (n_scratch_s > 0) {
+    n_scratch_s = 0;
+    pl_free(_ga_scratch_s);
+  }
+  _ga_scratch_s = PL_NEW(n, short);
+  if (_ga_scratch_s == NULL) {
+    mem_error();
     return 1;
   }
-  nScratchS= n;
+  n_scratch_s = n;
   return 0;
 }
 
 int ga_free_scratch(void)
 {
-  if (nScratchP>0) { pl_free(gaxScratch);  pl_free(gayScratch); }
-  if (nScratchS>0) pl_free(gasScratch);
-  if (nScratch>0) { pl_free(xScratch);   pl_free(yScratch); }
-  nScratchP= nScratchS= nScratch= 0;
+  if (n_scratch_p > 0) {
+    n_scratch_p = 0;
+    pl_free(_ga_scratch_x);
+    pl_free(_ga_scratch_y);
+  }
+  if (n_scratch_s > 0) {
+    n_scratch_s = 0;
+    pl_free(_ga_scratch_s);
+  }
+  if (n_scratch > 0) {
+    n_scratch = 0;
+    pl_free(scratch_x);
+    pl_free(scratch_y);
+  }
   return 0;
 }
 
@@ -616,15 +643,15 @@ static int MeshColF(long iMax, long ijMax, int *ireg, int region,
   while ((j+=iMax)<ijMax)   /* scan till edge exists */
     if (ireg[j] || ireg[j+1]) break;
   if (j>=ijMax) return 1;
-  gaxScratch[0]= x[j-iMax];   /* gather 1st segment into scratch */
-  gayScratch[0]= y[j-iMax];
-  gaxScratch[1]= x[j];
-  gayScratch[1]= y[j];
+  _ga_scratch_x[0]= x[j-iMax];   /* gather 1st segment into scratch */
+  _ga_scratch_y[0]= y[j-iMax];
+  _ga_scratch_x[1]= x[j];
+  _ga_scratch_y[1]= y[j];
   k= 2;
   while ((j+=iMax)<ijMax) { /* scan till edge does not exist */
     if (!ireg[j] && !ireg[j+1]) break;
-    gaxScratch[k]= x[j];      /* gather next segment into scratch */
-    gayScratch[k]= y[j];
+    _ga_scratch_x[k]= x[j];      /* gather next segment into scratch */
+    _ga_scratch_y[k]= y[j];
     k++;
   }
   *jj= j;
@@ -653,15 +680,15 @@ static int MeshColR(long iMax, long ijMax, int *ireg, int region,
   while ((j+=iMax)<ijMax)   /* scan till edge exists */
     if (ireg[j]==region || ireg[j+1]==region) break;
   if (j>=ijMax) return 1;
-  gaxScratch[0]= x[j-iMax];   /* gather 1st segment into scratch */
-  gayScratch[0]= y[j-iMax];
-  gaxScratch[1]= x[j];
-  gayScratch[1]= y[j];
+  _ga_scratch_x[0]= x[j-iMax];   /* gather 1st segment into scratch */
+  _ga_scratch_y[0]= y[j-iMax];
+  _ga_scratch_x[1]= x[j];
+  _ga_scratch_y[1]= y[j];
   k= 2;
   while ((j+=iMax)<ijMax) { /* scan till edge does not exist */
     if (ireg[j]!=region && ireg[j+1]!=region) break;
-    gaxScratch[k]= x[j];      /* gather next segment into scratch */
-    gayScratch[k]= y[j];
+    _ga_scratch_x[k]= x[j];      /* gather next segment into scratch */
+    _ga_scratch_y[k]= y[j];
     k++;
   }
   *jj= j;
@@ -690,15 +717,15 @@ static int MeshColB(long iMax, long ijMax, int *ireg, int region,
   while ((j+=iMax)<ijMax)   /* scan till edge exists */
     if ((ireg[j]==region) ^ (ireg[j+1]==region)) break;
   if (j>=ijMax) return 1;
-  gaxScratch[0]= x[j-iMax];   /* gather 1st segment into scratch */
-  gayScratch[0]= y[j-iMax];
-  gaxScratch[1]= x[j];
-  gayScratch[1]= y[j];
+  _ga_scratch_x[0]= x[j-iMax];   /* gather 1st segment into scratch */
+  _ga_scratch_y[0]= y[j-iMax];
+  _ga_scratch_x[1]= x[j];
+  _ga_scratch_y[1]= y[j];
   k= 2;
   while ((j+=iMax)<ijMax) { /* scan till edge does not exist */
     if ((ireg[j]!=region) ^ (ireg[j+1]==region)) break;
-    gaxScratch[k]= x[j];      /* gather next segment into scratch */
-    gayScratch[k]= y[j];
+    _ga_scratch_x[k]= x[j];      /* gather next segment into scratch */
+    _ga_scratch_y[k]= y[j];
     k++;
   }
   *jj= j;
@@ -728,7 +755,7 @@ static int *NewReg(long iMax, long ijMax)
       if (j==iMax) j= 0;
     }
   } else {
-    MMError();
+    mem_error();
   }
   return tmpReg;
 }
@@ -762,7 +789,7 @@ int ga_draw_mesh(ga_mesh_t *mesh, int region, int boundary, int inhibit)
   }
 
   /* Be sure there is enough scratch space to gather a column */
-  if (!(inhibit&2) && GaGetScratchP(jMax)) return 1;
+  if (!(inhibit&2) && _ga_get_scratch_p(jMax)) return 1;
 
   /* Create default region array if none supplied */
   if (!ireg) {
@@ -785,7 +812,7 @@ int ga_draw_mesh(ga_mesh_t *mesh, int region, int boundary, int inhibit)
       j= i;
       for (;;) {
         if (MeshCol(iMax, ijMax, ireg, region, x, y, &j, &k)) break;
-        value|= gp_draw_lines(k, gaxScratch, gayScratch);
+        value|= gp_draw_lines(k, _ga_scratch_x, _ga_scratch_y);
         if (j>=ijMax) break;
       }
     }
@@ -864,13 +891,13 @@ int ga_fill_marker(long n, const gp_real_t *px, const gp_real_t *py,
   y0= y0*scaly + offy;
 
   /* get scratch space, copy points to scratch, adding specified offsets */
-  GaGetScratchP(n);
+  _ga_get_scratch_p(n);
   for (i=0 ; i<n ; i++) {
-    gaxScratch[i]= px[i] + x0;
-    gayScratch[i]= py[i] + y0;
+    _ga_scratch_x[i]= px[i] + x0;
+    _ga_scratch_y[i]= py[i] + y0;
   }
-  px= gaxScratch;
-  py= gayScratch;
+  px= _ga_scratch_x;
+  py= _ga_scratch_y;
 
   if (gp_clipping) {
     gp_real_t xmin= gp_transform.viewport.xmin;
@@ -1021,9 +1048,9 @@ int ga_init_contour(ga_mesh_t *msh, int regn,
   level= lev;
 
   /* Get scratch space to hold edges */
-  if (GaGetScratchS(2*ijMax)) return 0;
-  iedges= gasScratch;
-  jedges= gasScratch+ijMax;
+  if (_ga_get_scratch_s(2*ijMax)) return 0;
+  iedges= _ga_scratch_s;
+  jedges= _ga_scratch_s+ijMax;
 
   /* Find all points above contour level */
   for (ij=0 ; ij<ijMax ; ij++) iedges[ij]= zz[ij]>lev;
@@ -1066,7 +1093,7 @@ int ga_init_contour(ga_mesh_t *msh, int regn,
   keepLeft= 0;
 
   /* Get scratch space for level curves */
-  if (GaGetScratchP(ni+nib+nj+njb+1)) return 0;
+  if (_ga_get_scratch_p(ni + nib + nj +njb + 1)) return 0;
 
   if (tmpReg) FreeTmpReg();
   return ni || nib || nj || njb;
@@ -1164,8 +1191,8 @@ int ga_draw_contour(long *cn, gp_real_t **cx, gp_real_t **cy, int *closed)
 
   /* Salt away first point */
   frac= (z[ij]-level)/(z[ij]-z[ij-inc]);
-  gaxScratch[0]= frac*(x[ij-inc]-x[ij]) + x[ij];
-  gayScratch[0]= frac*(y[ij-inc]-y[ij]) + y[ij];
+  _ga_scratch_x[0]= frac*(x[ij-inc]-x[ij]) + x[ij];
+  _ga_scratch_y[0]= frac*(y[ij-inc]-y[ij]) + y[ij];
   n= 1;
 
   /* Walk the contour */
@@ -1218,8 +1245,8 @@ int ga_draw_contour(long *cn, gp_real_t **cx, gp_real_t **cy, int *closed)
 
     /* Salt away current point */
     frac= (z[ij]-level)/(z[ij]-z[ij-inc]);
-    gaxScratch[n]= frac*(x[ij-inc]-x[ij]) + x[ij];
-    gayScratch[n]= frac*(y[ij-inc]-y[ij]) + y[ij];
+    _ga_scratch_x[n]= frac*(x[ij-inc]-x[ij]) + x[ij];
+    _ga_scratch_y[n]= frac*(y[ij-inc]-y[ij]) + y[ij];
     n++;
 
     /* Step into next zone */
@@ -1247,14 +1274,14 @@ int ga_draw_contour(long *cn, gp_real_t **cx, gp_real_t **cy, int *closed)
   }
 
   *cn= n;
-  *cx= gaxScratch;
-  *cy= gayScratch;
+  *cx= _ga_scratch_x;
+  *cy= _ga_scratch_y;
   *closed= isClosed;
 
   /* Copy first point for closed curves (as a convenience) */
   if (isClosed) {
-    gaxScratch[n]= gaxScratch[0];
-    gayScratch[n]= gayScratch[0];
+    _ga_scratch_x[n]= _ga_scratch_x[0];
+    _ga_scratch_y[n]= _ga_scratch_y[0];
   }
 
   return 1;
@@ -1280,8 +1307,8 @@ static void DoSmoothing(long *n, const gp_real_t **px, const gp_real_t **py,
   gp_real_t x0, y0, x1, y1, dx0, dy0, dx1, dy1, dsx, dsy, ds0, ds1;
   long i, j;
 
-  if (GetScratch(3*nn+2)) {
-    *n= 0;
+  if (get_scratch(3*nn + 2)) {
+    *n = 0;
     return;
   }
 
@@ -1312,8 +1339,8 @@ static void DoSmoothing(long *n, const gp_real_t **px, const gp_real_t **py,
 
   /* do nn-1 segments- (dx1,dy1) is current segment, (dx0,dy0) previous */
   for (i=1 ; i<nn ; i++) {
-    xScratch[j]= x0= x1;
-    yScratch[j]= y0= y1;
+    scratch_x[j]= x0= x1;
+    scratch_y[j]= y0= y1;
     x1= scalx*x[i]+offx;
     y1= scaly*y[i]+offy;
 
@@ -1329,19 +1356,19 @@ static void DoSmoothing(long *n, const gp_real_t **px, const gp_real_t **py,
     dy1= ds1!=0.0? dy1/ds1 : 0.0;
     dsx= smoothness * (dx0 + dx1);
     dsy= smoothness * (dy0 + dy1);
-    xScratch[j-1]= x0 - ds0*dsx;
-    xScratch[j+1]= x0 + ds1*dsx;
-    yScratch[j-1]= y0 - ds0*dsy;
-    yScratch[j+1]= y0 + ds1*dsy;
+    scratch_x[j-1]= x0 - ds0*dsx;
+    scratch_x[j+1]= x0 + ds1*dsx;
+    scratch_y[j-1]= y0 - ds0*dsy;
+    scratch_y[j+1]= y0 + ds1*dsy;
 
     j+= 3;
   }
-  /* now i= n and j= 3*n-2, xScratch[3*n-4] has been set */
+  /* now i= n and j= 3*n-2, scratch_x[3*n-4] has been set */
 
   if (closed) {
     /* final segment connects last point to first */
-    xScratch[j]= x0= x1;
-    yScratch[j]= y0= y1;
+    scratch_x[j]= x0= x1;
+    scratch_y[j]= y0= y1;
     x1= scalx*x[0]+offx;
     y1= scaly*y[0]+offy;
 
@@ -1357,28 +1384,28 @@ static void DoSmoothing(long *n, const gp_real_t **px, const gp_real_t **py,
     dy1= ds1!=0.0? dy1/ds1 : 0.0;
     dsx= smoothness * (dx0 + dx1);
     dsy= smoothness * (dy0 + dy1);
-    xScratch[j-1]= x0 - ds0*dsx;
-    xScratch[j+1]= x0 + ds1*dsx;
-    yScratch[j-1]= y0 - ds0*dsy;
-    yScratch[j+1]= y0 + ds1*dsy;
+    scratch_x[j-1]= x0 - ds0*dsx;
+    scratch_x[j+1]= x0 + ds1*dsx;
+    scratch_y[j-1]= y0 - ds0*dsy;
+    scratch_y[j+1]= y0 + ds1*dsy;
 
     /* last control point was computed when i=1, and final knot point
        is first point */
-    xScratch[j+2]= xScratch[0];
-    yScratch[j+2]= yScratch[0];
-    xScratch[j+3]= x1;  /* == xScratch[1] */
-    yScratch[j+3]= y1;  /* == yScratch[1] */
+    scratch_x[j+2]= scratch_x[0];
+    scratch_y[j+2]= scratch_y[0];
+    scratch_x[j+3]= x1;  /* == scratch_x[1] */
+    scratch_y[j+3]= y1;  /* == scratch_y[1] */
     *n= j+3;  /* == 3*n+1 (counts first/last point twice) */
 
   } else {
     /* final control point and final knot point coincide */
-    xScratch[j]= xScratch[j-1]= x1;
-    yScratch[j]= yScratch[j-1]= y1;
+    scratch_x[j]= scratch_x[j-1]= x1;
+    scratch_y[j]= scratch_y[j-1]= y1;
     *n= j;  /* == 3*n-2 */
   }
 
-  *px= xScratch+1;
-  *py= yScratch+1;
+  *px= scratch_x+1;
+  *py= scratch_y+1;
 }
 
 static int SmoothLines(long n, const gp_real_t *px, const gp_real_t *py,

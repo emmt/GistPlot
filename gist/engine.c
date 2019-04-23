@@ -13,9 +13,9 @@
 #include "gist/draw.h"
 #include "play/std.h"
 
-gp_engine_t *gp_engines= 0;
-gp_engine_t *gp_active_engines= 0;
-gp_engine_t *gp_preempted_engine= 0;
+gp_engine_t* gp_engines = NULL;
+gp_engine_t* gp_active_engines = NULL;
+gp_engine_t* gp_preempted_engine = NULL;
 
 #include <string.h>
 
@@ -513,9 +513,8 @@ void gp_swallow(gp_box_t *preditor, const gp_box_t *prey)
    associated with one interactive engine some of the inefficiency could
    be reduced.  These are not intended for external use.  */
 
-extern int gdNowRendering, gdMaxRendered;
-int gdNowRendering= -1;
-int gdMaxRendered= -1;
+static int now_rendering = -1;
+static int max_rendered  = -1;
 
 int _gd_begin_dr(gd_drawing_t *drawing, gp_box_t *damage, int landscape)
 {
@@ -565,7 +564,7 @@ int _gd_begin_dr(gd_drawing_t *drawing, gp_box_t *damage, int landscape)
     }
   }
 
-  gdNowRendering= gdMaxRendered= -1;
+  now_rendering = max_rendered = -1;
   return needToRedraw;
 }
 
@@ -631,7 +630,7 @@ int _gd_begin_el(gp_box_t *box, int number)
       /* this engine hasn't seen this element before */
       eng->inhibit= 0;
       value= 1;
-      if (eng->damaged && gdMaxRendered<=eng->lastDrawn) {
+      if (eng->damaged && max_rendered <= eng->lastDrawn) {
         /* If this is the first new element, the damage flag
            must be reset, and ChangeMap must be called to set the
            clip rectangle back to its undamaged boundary.  */
@@ -650,8 +649,8 @@ int _gd_begin_el(gp_box_t *box, int number)
     }
 
     /* set number of element currently being drawn for _gd_end_dr */
-    gdNowRendering= number;
-    if (gdMaxRendered<gdNowRendering) gdMaxRendered= gdNowRendering;
+    now_rendering = number;
+    if (max_rendered < now_rendering) max_rendered = now_rendering;
   }
 
   return value;
@@ -662,8 +661,8 @@ void _gd_end_dr(void)
   gp_engine_t *eng;
   /* Done with this drawing- reset inhibit, damaged, and lastDrawn flags */
   for (eng=gp_next_active_engine(0) ; eng ; eng=gp_next_active_engine(eng)) {
-    if (eng->lastDrawn<gdMaxRendered) eng->lastDrawn= gdMaxRendered;
-    eng->inhibit= eng->damaged= 0;
+    if (eng->lastDrawn < max_rendered) eng->lastDrawn = max_rendered;
+    eng->inhibit= eng->damaged = 0;
   }
 }
 

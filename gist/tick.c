@@ -17,12 +17,10 @@
  */
 
 #include "gist2.h"
+#include "gist/private.h"
 
 /* Use sprintf function heavily */
 #include <stdio.h>
-
-/* The nice unit routine defined here is also used in draw.c */
-extern gp_real_t GpNiceUnit(gp_real_t finest, int *base, int *power);
 
 #define TICK_ANY (GA_TICK_L | GA_TICK_U | GA_TICK_C)
 #define LABEL_ANY (GA_LABEL_L | GA_LABEL_U)
@@ -39,10 +37,6 @@ static long nTotal;
 static int nLevel;
 static int nChangeLevel[GA_TICK_LEVELS];
 static gp_real_t *ticks;
-
-/* Scratch space maintained by GaGetScratchP */
-extern int GaGetScratchP(long n);
-extern gp_real_t *gaxScratch, *gayScratch;
 
 /* Additional stuff required for sub-decade tick labels */
 static gp_real_t subTick0[3], subUnit[3];
@@ -116,7 +110,7 @@ static void DrawOverflow(gp_real_t x, gp_real_t y);
 
 /* ------------------------------------------------------------------------ */
 
-gp_real_t GpNiceUnit(gp_real_t finest, int *base, int *power)
+gp_real_t _gp_nice_unit(gp_real_t finest, int *base, int *power)
 {
   int b, p;
   gp_real_t unit;
@@ -402,7 +396,7 @@ static void ScopeOutTicks(gp_real_t *loin, gp_real_t *hiin,
   }
 
   finest= delta/(*nMajor);
-  if (!(*useLog) || finest>1.0) *jUnit= GpNiceUnit(finest, jBase, jPower);
+  if (!(*useLog) || finest>1.0) *jUnit= _gp_nice_unit(finest, jBase, jPower);
   else { *jUnit= 1.0;   *jBase= 1;   *jPower= 0; }
 
   *itick0= ceil(lo/(*jUnit));
@@ -495,15 +489,15 @@ static void FindTicks(gp_real_t lo, gp_real_t hi, ga_axis_style_t *style, int is
 
   /* Be sure there is enough scratch space to hold the ticks */
   reqdSpace= (int)(useLog? style->logAdjMinor*nMinor : nMinor) + 16;
-  if (GaGetScratchP(3*reqdSpace)) {
+  if (_ga_get_scratch_p(3*reqdSpace)) {
     nTotal= 0;
     nLevel= 0;
     nChangeLevel[0]= 0;
     return; /* memory manager failure */
   } else {
-    px= gaxScratch;
+    px= _ga_scratch_x;
     qx= px+reqdSpace;
-    py= gayScratch;
+    py= _ga_scratch_y;
     qy= py+reqdSpace;
     ticks= qx+reqdSpace;
   }
@@ -641,9 +635,9 @@ static void FindTicks(gp_real_t lo, gp_real_t hi, ga_axis_style_t *style, int is
          These scales tend to "look linear".  If there are to be no
          major ticks, never need to choose this. */
       finest= (1.-exp10(-finest));  /* see note above */
-      unit[0]= GpNiceUnit(2.0*finest, base+0, subPower+0);
-      unit[1]= GpNiceUnit(5.0*finest, base+1, subPower+1);
-      unit[2]= GpNiceUnit(10.0*finest, base+2, subPower+2);
+      unit[0]= _gp_nice_unit(2.0*finest, base+0, subPower+0);
+      unit[1]= _gp_nice_unit(5.0*finest, base+1, subPower+1);
+      unit[2]= _gp_nice_unit(10.0*finest, base+2, subPower+2);
       if (finest>LOG6o5 && base[1]==1) {
         /* log10(5/4) >= finest > log10(6/5) needs correction. */
         base[1]= 2;

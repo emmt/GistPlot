@@ -61,13 +61,10 @@ static int DrawDisjoint(gp_engine_t *engine, long n, const gp_real_t *px,
 static void GetVisibleNDC(gp_x_engine_t *xeng,
                           gp_real_t *xn, gp_real_t *xx, gp_real_t *yn, gp_real_t *yx);
 
-/* Hook for hlevel.c error handling.  */
-extern void (*HLevelHook)(gp_engine_t *engine);
-
-
-extern int GxJustifyText(gp_xymap_t *map, gp_real_t x0, gp_real_t y0, const char *text,
-                         int *ix, int *iy, int xbox[], int ybox[]);
-extern int GxJustifyNext(const char **text, int *ix, int *iy);
+static int justify_text(gp_xymap_t *map, gp_real_t x0, gp_real_t y0,
+                        const char *text, int *ix, int *iy,
+                        int xbox[], int ybox[]);
+static int justify_next(const char **text, int *ix, int *iy);
 
 static int gxErrorFlag= 0;
 static void GxErrorHandler(void);
@@ -177,7 +174,7 @@ TextWidth(const char *text, int nc, const gp_text_attribs_t *t)
 }
 
 int
-GxJustifyText(gp_xymap_t *map, gp_real_t x0, gp_real_t y0, const char *text,
+justify_text(gp_xymap_t *map, gp_real_t x0, gp_real_t y0, const char *text,
               int *ix, int *iy, int xbox[], int ybox[])
 {
   int nLines, alignV, dx, dy, xmin, xmax, ymin, ymax, ix0, iy0;
@@ -285,7 +282,7 @@ GxJustifyText(gp_xymap_t *map, gp_real_t x0, gp_real_t y0, const char *text,
 }
 
 int
-GxJustifyNext(const char **text, int *ix, int *iy)
+justify_next(const char **text, int *ix, int *iy)
 {
   const char *txt= *text+nChunk;
   int xadj= 0, yadj= 0;
@@ -800,7 +797,7 @@ DrwText(gp_engine_t *engine, gp_real_t x0, gp_real_t y0, const char *text)
   if (yn > yx) { int tmp=yn ; yn=yx; yx=tmp ; }
 
   /* handle multi-line strings */
-  len = GxJustifyText(map, x0, y0, text, &ix, &iy, xbox, ybox);
+  len = justify_text(map, x0, y0, text, &ix, &iy, xbox, ybox);
   if (len < 0) return 0;
 
   /* consider whether string is completely clipped */
@@ -819,7 +816,7 @@ DrwText(gp_engine_t *engine, gp_real_t x0, gp_real_t y0, const char *text)
       else txt = text;
       pl_text(w, ix, iy, txt, len);
     }
-    len = GxJustifyNext(&text, &ix, &iy);
+    len = justify_next(&text, &ix, &iy);
   } while (len>=0);
 
   xeng->e.marked = 1;
@@ -1640,7 +1637,7 @@ gx_direct(gp_engine_t *engine)
 
 /* ------------------------------------------------------------------------ */
 
-void (*HLevelHook)(gp_engine_t *engine)= 0;
+void (*_gh_hook)(gp_engine_t *engine)= 0;
 
 static void
 g_do_disconnect(void)
@@ -1667,7 +1664,7 @@ ShutDown(gp_x_engine_t *xeng)
   /* turn off all event callbacks (probably unnecessary) */
   xeng->e.on = 0;
   /* destroy any hlevel references without further ado */
-  if (HLevelHook) HLevelHook((gp_engine_t *)xeng);
+  if (_gh_hook != NULL) _gh_hook((gp_engine_t*)xeng);
   xeng->w = xeng->win = 0;
   xeng->s = 0;
   /* note that pl_destroy and gp_delete_engine call on_destroy in Windows */

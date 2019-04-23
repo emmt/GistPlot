@@ -9,12 +9,11 @@
  */
 
 #include "gist2.h"
+#include "gist/private.h"
 #include "play/io.h"
 #include "play/std.h"
 #include "play2.h"
 #include <errno.h>
-
-extern void GdKillSystems(void);  /* defined in draw.c */
 
 #ifndef GISTPATH
 #define GISTPATH "~/gist:~/Gist:/usr/local/lib/gist"
@@ -186,28 +185,26 @@ static char *FormFullName(char *gistPath, const char *name)
   return gistPath+len + strspn(gistPath+len, ":");
 }
 
-extern pl_file_t *GistOpen(const char *name);
-pl_file_t *GistOpen(const char *name)
+pl_file_t *gp_open(const char *name)
 {
-  pl_file_t *f;
-  if (!name) return 0;
-
-  f= pl_fopen(name, "r");
-
-  if (!f && name[0]!='/') {
+  pl_file_t* f;
+  if (name == NULL) {
+    return NULL;
+  }
+  f = pl_fopen(name, "r");
+  if (f == NULL && name[0] != '/') {
     /* Try to find relative file names somewhere on GISTPATH or, failing
        that, in the default directory specified at compile time.  */
-    char *gistPath= FormGistPath();
-    if (gistPath) {
+    char* gistPath= FormGistPath();
+    if (gistPath != NULL) {
       do {
-        gistPath= FormFullName(gistPath, name);
-        f= pl_fopen(scratch, "r");
-      } while (!f && gistPath[0]);
+        gistPath = FormFullName(gistPath, name);
+        f = pl_fopen(scratch, "r");
+      } while (f == NULL && gistPath[0] != '\0');
       pl_free(scratch);
     }
   }
-
-  if (!f) {
+  if (f == NULL) {
     strcpy(gp_error, "unable to open file ");
     strncat(gp_error, name, 100);
   }
@@ -268,7 +265,7 @@ int gp_read_palette(gp_engine_t *engine, const char *gpFile,
   char *token, *suffix;
   pl_col_t *pal= 0;
   int iColor= -1,  nColors= 0,  ntsc= 0,  lookingFor4= 0;
-  pl_file_t *gp= GistOpen(gpFile);
+  pl_file_t *gp= gp_open(gpFile);
 
   *palette= 0;
   if (!gp) return 0;
@@ -831,7 +828,7 @@ int gd_read_style(gd_drawing_t *drawing, const char *gsFile)
 
   if (!gsFile) return 0;
 
-  gs= GistOpen(gsFile);
+  gs= gp_open(gsFile);
   if (!gs) return 1;
 
   tempSystem= defaultSystem;
@@ -840,7 +837,7 @@ int gd_read_style(gd_drawing_t *drawing, const char *gsFile)
   input= pl_fgets(gs, line, 137);
   if (!input) goto err;                      /* eof (or error) */
 
-  GdKillSystems();
+  _gd_kill_systems();
 
   for (;;) {
     input= WhiteSkip(input);

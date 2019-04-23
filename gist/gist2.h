@@ -13,6 +13,7 @@
 
 #include <play2.h>
 #include <play/extern.h>
+#include <play/io.h>
 
 /* current code breaks if gp_real_t is float instead of double */
 typedef double gp_real_t;
@@ -35,6 +36,10 @@ PL_EXTERN char gp_error[128];  /* most recent error message */
 
 PL_EXTERN char *gp_default_path;  /* set in Makefile or gread.c, can be
                                   overridden by resetting directly */
+
+PL_EXTERN pl_file_t *gp_open(const char *name);
+/* Open a Gist file.  First try with NAME, then, if NAME is not an absolute
+   path, in the GISTPATH directories.  Return NULL if not found. */
 
 /* ------------------------------------------------------------------------ */
 /* Initialization Functions */

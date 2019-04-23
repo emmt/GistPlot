@@ -8,13 +8,11 @@
  * Read the accompanying LICENSE file for details.
  */
 
+#include "play2.h"
 #include "play/io.h"
 #include "gist/ps.h"
 #include "gist/text.h"
 
-extern pl_file_t *GistOpen(const char *name);  /* from gread.c */
-
-#include "play2.h"
 #include <string.h>
 #include <time.h>
 
@@ -22,7 +20,7 @@ extern pl_file_t *GistOpen(const char *name);  /* from gread.c */
 #define CREATE_PS(name) pl_fopen(name, "w")
 #endif
 
-static gp_callbacks_t g_ps_on = { "gist gp_ps_engine_t", 0, 0, 0, 0, 0, 0, 0, 0 };
+static gp_callbacks_t ps_on = { "gist gp_ps_engine_t", 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static char line[80];  /* no lines longer than 78 characters! */
 
@@ -113,8 +111,8 @@ static int PutPrologLine(pl_file_t *file)
 
 static pl_file_t *CopyProlog(const char *name, const char *title)
 {
-  pl_file_t *psps= GistOpen("ps.ps");
-  pl_file_t *file= strcmp(name, "*stdout*")? CREATE_PS(name) : pf_stdout;
+  pl_file_t *psps = gp_open("ps.ps");
+  pl_file_t *file = strcmp(name, "*stdout*")? CREATE_PS(name) : pf_stdout;
   if (!psps) strcpy(gp_error, "unable to open PostScript prolog ps.ps");
   if (!file) strcpy(gp_error, "unable to create PostScript output file");
 
@@ -1368,12 +1366,13 @@ gp_engine_t *gp_new_ps_engine(char *name, int landscape, int mode, char *file)
 
   SetPSTransform(&toPixels, landscape);
 
-  psEngine=
-    (gp_ps_engine_t *)gp_new_engine(engineSize, name, &g_ps_on, &toPixels, landscape,
-                            &Kill, &Clear, &Flush, &gp_compose_map,
-                            &ChangePalette, &DrawLines, &DrawMarkers,
-                            &DrwText, &DrawFill, &DrawCells,
-                            &DrawDisjoint);
+  psEngine = (gp_ps_engine_t*)gp_new_engine(engineSize, name, &ps_on,
+                                            &toPixels, landscape,
+                                            &Kill, &Clear, &Flush,
+                                            &gp_compose_map, &ChangePalette,
+                                            &DrawLines, &DrawMarkers,
+                                            &DrwText, &DrawFill, &DrawCells,
+                                            &DrawDisjoint);
 
   if (!psEngine) {
     strcpy(gp_error, "memory manager failed in gp_new_ps_engine");
@@ -1408,12 +1407,12 @@ gp_engine_t *gp_new_ps_engine(char *name, int landscape, int mode, char *file)
   psEngine->line[0]= '\0';
   psEngine->nchars= 0;
 
-  return (gp_engine_t *)psEngine;
+  return (gp_engine_t*)psEngine;
 }
 
 gp_ps_engine_t *gp_ps_engine(gp_engine_t *engine)
 {
-  return (engine && engine->on==&g_ps_on)? (gp_ps_engine_t *)engine : 0;
+  return (engine && engine->on == &ps_on) ? (gp_ps_engine_t*)engine : NULL;
 }
 
 /* ------------------------------------------------------------------------ */

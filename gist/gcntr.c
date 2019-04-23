@@ -10,6 +10,8 @@
  */
 
 #include "gist2.h"
+#include "gist/private.h"
+
 /* note: The static functions in this file that actually do the work
  * are independent of gist2.h, except for the data type gp_real_t.
  * However, they do make use of the region and triangulation arrays
@@ -918,16 +920,13 @@ static void data_init(Csite *site, Cdata *data, int region, long nchunk)
 
 /* here are the interface routines for Gist */
 
-extern int GaGetScratchS(long n);
-extern short *gasScratch;
-
 static Csite gc_site;
 
 static long gc_common(ga_mesh_t *mesh, int region, const gp_real_t *zz,
                       long nchunk, long *nparts);
 
 long gp_cont_init1(ga_mesh_t *mesh, int region, const gp_real_t *zz,
-             gp_real_t lev, long *nparts)
+                   gp_real_t lev, long *nparts)
 {
   gc_site.zlevel[0]= gc_site.zlevel[1]= lev;
 
@@ -935,7 +934,7 @@ long gp_cont_init1(ga_mesh_t *mesh, int region, const gp_real_t *zz,
 }
 
 long gp_cont_init2(ga_mesh_t *mesh, int region, const gp_real_t *zz,
-             gp_real_t levs[2], long nchunk, long *nparts)
+                   gp_real_t levs[2], long nchunk, long *nparts)
 {
   gc_site.zlevel[0]= levs[0];
   gc_site.zlevel[1]= levs[1];
@@ -970,14 +969,14 @@ static long gc_common(ga_mesh_t *mesh, int region, const gp_real_t *zz,
 
   *nparts= 0;
   /* get scratch space for data array */
-  if (GaGetScratchS(gc_site.imax*(gc_site.jmax+1)+1)) return 0;
+  if (_ga_get_scratch_s(gc_site.imax*(gc_site.jmax + 1) + 1)) return 0;
 
   /* initialize the data array */
-  data_init(&gc_site, gasScratch, region, nchunk);
+  data_init(&gc_site, _ga_scratch_s, region, nchunk);
 
   /* make first pass to compute required sizes for gp_cont_trace second pass */
   for (;;) {
-    n= curve_tracer(&gc_site, gasScratch, 0);
+    n= curve_tracer(&gc_site, _ga_scratch_s, 0);
     if (!n) break;
     if (n>0) {
       (*nparts)++;
@@ -998,7 +997,7 @@ long gp_cont_trace(long *n, gp_real_t *px, gp_real_t *py)
   for (;;) {
     gc_site.xcp= px;
     gc_site.ycp= py;
-    np= curve_tracer(&gc_site, gasScratch, 1);
+    np= curve_tracer(&gc_site, _ga_scratch_s, 1);
 
     if (!np) break;
     if (np>0) {

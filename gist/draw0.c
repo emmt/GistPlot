@@ -8,6 +8,7 @@
  * Read the accompanying LICENSE file for details.
  */
 
+#include "gist/private.h"
 #include "gist/draw.h"
 #include "gist/text.h"
 #include "play2.h"
@@ -18,8 +19,6 @@ extern char *strcpy(char *, const char *);
 extern double log10(double);
 #define SAFELOG0 (-999.)
 #define SAFELOG(x) ((x)>0? log10(x) : ((x)<0? log10(-(x)) : -999.))
-
-extern void Gd_KillRing(void *elv);
 
 static void KillElement(gd_element_t *el);
 static void LinesKill(void *el);
@@ -33,7 +32,6 @@ static void VectorsKill(void *el);
 static void KillConGrps(ge_lines_t **grps, int ngrps);
 static void ContoursKill(void *el);
 static void SystemKill(void *el);
-extern void Gd_KillMeshXY(void *vMeshEl);
 
 static int LinesGet(void *el);
 static int DisjointGet(void *el);
@@ -45,10 +43,8 @@ static int FilledGet(void *el);
 static int VectorsGet(void *el);
 static int ContoursGet(void *el);
 static int SystemGet(void *el);
-extern void Gd_MeshXYGet(void *vMeshEl);
 
 static int LinesSet(void *el, int xyzChanged);
-extern void Gd_LinesSubSet(void *el);
 static int DisjointSet(void *el, int xyzChanged);
 static int TextSet(void *el, int xyzChanged);
 static int CellsSet(void *el, int xyzChanged);
@@ -93,7 +89,6 @@ static void MeshMargin(void *el, gp_box_t *margin);
 static void VectorsMargin(void *el, gp_box_t *margin);
 static void ContoursMargin(void *el, gp_box_t *margin);
 
-extern void Gd_ScanZ(long n, const gp_real_t *z, gp_real_t *zmin, gp_real_t *zmax);
 static int ScanMn(long n, gp_real_t *x, gp_real_t *y, gp_real_t ymin,
                   gp_real_t *xmin, gp_real_t *xmax);
 static int ScanMx(long n, gp_real_t *x, gp_real_t *y, gp_real_t ymax,
@@ -107,17 +102,10 @@ static int GetLogZ(long n, gp_real_t *z, gp_real_t **zlog,
 static int Get_LogZ(long n, long nndc, gp_real_t *z, gp_real_t **zlog,
                     gp_real_t *zmin, gp_real_t *zmax);
 
-extern int Gd_MakeContours(ge_contours_t *con);
-extern int Gd_DrawRing(void *elv, int xIsLog, int yIsLog,
-                       ge_system_t *sys, int t);
-extern void Gd_NextMeshBlock(long *ii, long *jj, long len, long iMax,
-                             int *reg, int region);
-
 /* ------------------------------------------------------------------------ */
 /* Set virtual function tables */
 
-extern gd_operations_t *GetDrawingOpTables(void);
-static gd_operations_t opTables[GD_ELEM_SYSTEM+1]= {
+static gd_operations_t operations[GD_ELEM_SYSTEM + 1] = {
   { GD_ELEM_NONE, 0, 0, 0, 0, 0, 0 },
   { GD_ELEM_LINES, &LinesKill, &LinesGet, &LinesSet,
       &LinesDraw, &LinesScan, &LinesMargin },
@@ -142,16 +130,16 @@ static gd_operations_t opTables[GD_ELEM_SYSTEM+1]= {
 };
 
 /* this is called at the first call to gd_new_drawing */
-gd_operations_t *GetDrawingOpTables(void)
+gd_operations_t *_gd_get_drawing_operations(void)
 {
-  return opTables;
+  return operations;
 }
 
 /* ------------------------------------------------------------------------ */
 /* Destructors for drawing elements are private, accessed via the
    Kill virtual function */
 
-void Gd_KillRing(void *elv)
+void _gd_kill_ring(void *elv)
 {
   gd_element_t *el, *next= elv;
   while ((el= next)) {
@@ -225,14 +213,14 @@ static void PolysKill(void *el)
 
 static void MeshKill(void *el)
 {
-  Gd_KillMeshXY(el);
+  _gd_kill_mesh_xy(el);
   KillElement(el);
 }
 
 static void FilledKill(void *el)
 {
   ge_fill_t *fill= el;
-  Gd_KillMeshXY(el);
+  _gd_kill_mesh_xy(el);
   if (fill->colors) {
     if (!(fill->noCopy&GD_NOCOPY_COLORS)) pl_free(fill->colors);
     else if (gd_free) gd_free(fill->colors);
@@ -243,7 +231,7 @@ static void FilledKill(void *el)
 static void VectorsKill(void *el)
 {
   ge_vectors_t *vec= el;
-  Gd_KillMeshXY(el);
+  _gd_kill_mesh_xy(el);
   if (!(vec->noCopy&GD_NOCOPY_UV)) {
     if (vec->u) pl_free(vec->u);
     if (vec->v) pl_free(vec->v);
@@ -257,13 +245,13 @@ static void VectorsKill(void *el)
 static void KillConGrps(ge_lines_t **grps, int ngrps)
 {
   int i;
-  for (i=0 ; i<ngrps ; i++) { Gd_KillRing(grps[i]);  grps[i]= 0; }
+  for (i=0 ; i<ngrps ; i++) { _gd_kill_ring(grps[i]);  grps[i]= 0; }
 }
 
 static void ContoursKill(void *el)
 {
   ge_contours_t *con= el;
-  Gd_KillMeshXY(el);
+  _gd_kill_mesh_xy(el);
   if (con->z) {
     if (!(con->noCopy&GD_NOCOPY_Z)) pl_free(con->z);
     else if (gd_free) gd_free(con->z);
@@ -279,11 +267,11 @@ static void ContoursKill(void *el)
 static void SystemKill(void *el)
 {
   ge_system_t *sys= el;
-  Gd_KillRing(sys->elements);
+  _gd_kill_ring(sys->elements);
   KillElement(el);
 }
 
-void Gd_KillMeshXY(void *vMeshEl)
+void _gd_kill_mesh_xy(void *vMeshEl)
 {
   ge_mesh_t *meshEl= vMeshEl;
   ga_mesh_t *mesh= &meshEl->mesh;
@@ -306,7 +294,8 @@ void Gd_KillMeshXY(void *vMeshEl)
 }
 
 /* ------------------------------------------------------------------------ */
-/* GetProps virtual function loads ga_attributes, gd_properties from gd_element_t */
+/* GetProps virtual function loads ga_attributes, gd_properties from
+   gd_element_t */
 
 static int LinesGet(void *el)
 {
@@ -382,7 +371,7 @@ static int PolysGet(void *el)
 static int MeshGet(void *el)
 {
   ge_mesh_t *e= el;
-  Gd_MeshXYGet(el);
+  _gd_get_mesh_xy(el);
   gd_properties.hidden= e->el.hidden;
   gd_properties.legend= e->el.legend;
   gd_properties.boundary= e->boundary;
@@ -394,7 +383,7 @@ static int MeshGet(void *el)
 static int FilledGet(void *el)
 {
   ge_fill_t *e= el;
-  Gd_MeshXYGet(el);
+  _gd_get_mesh_xy(el);
   gd_properties.hidden= e->el.hidden;
   gd_properties.legend= e->el.legend;
   gd_properties.nColumns= e->nColumns;
@@ -407,7 +396,7 @@ static int FilledGet(void *el)
 static int VectorsGet(void *el)
 {
   ge_vectors_t *e= el;
-  Gd_MeshXYGet(el);
+  _gd_get_mesh_xy(el);
   gd_properties.hidden= e->el.hidden;
   gd_properties.legend= e->el.legend;
   gd_properties.u= e->u;
@@ -422,7 +411,7 @@ static int VectorsGet(void *el)
 static int ContoursGet(void *el)
 {
   ge_contours_t *e= el;
-  Gd_MeshXYGet(el);
+  _gd_get_mesh_xy(el);
   gd_properties.hidden= e->el.hidden;
   gd_properties.legend= e->el.legend;
   gd_properties.z= e->z;
@@ -442,7 +431,7 @@ static int SystemGet(void *el)
   return GD_ELEM_SYSTEM;
 }
 
-void Gd_MeshXYGet(void *vMeshEl)
+void _gd_get_mesh_xy(void *vMeshEl)
 {
   ge_mesh_t *meshEl= vMeshEl;
   ga_mesh_t *mesh= &meshEl->mesh;
@@ -462,7 +451,7 @@ void Gd_MeshXYGet(void *vMeshEl)
 static int LinesSet(void *el, int xyzChanged)
 {
   ge_lines_t *e= el;
-  Gd_LinesSubSet(el);
+  _gd_lines_subset(el);
   e->el.legend= gd_properties.legend;
   if (xyzChanged & GD_CHANGE_XY) {
     e->n= gd_properties.n;
@@ -474,13 +463,13 @@ static int LinesSet(void *el, int xyzChanged)
   return 0;
 }
 
-void Gd_LinesSubSet(void *el)
+void _gd_lines_subset(void *el)
 {
-  ge_lines_t *e= el;
-  e->el.hidden= gd_properties.hidden;
-  e->l= ga_attributes.l;
-  e->dl= ga_attributes.dl;
-  e->m= ga_attributes.m;
+  ge_lines_t* e = el;
+  e->el.hidden = gd_properties.hidden;
+  e->l  = ga_attributes.l;
+  e->dl = ga_attributes.dl;
+  e->m  = ga_attributes.m;
 }
 
 static int DisjointSet(void *el, int xyzChanged)
@@ -535,7 +524,7 @@ static int CellsSet(void *el, int xyzChanged)
 static int PolysSet(void *el, int xyzChanged)
 {
   ge_polys_t *e= el;
-  Gd_LinesSubSet(el);
+  _gd_lines_subset(el);
   e->el.legend= gd_properties.legend;
   if (xyzChanged & GD_CHANGE_XY) {
     e->n= gd_properties.n;
@@ -624,7 +613,7 @@ static int ContoursSet(void *el, int xyzChanged)
     if (gd_properties.nLevels>0) {
       if (!e->groups)
         e->groups= (ge_lines_t **)pl_malloc(sizeof(ge_lines_t *)*gd_properties.nLevels);
-      if (!e->groups || Gd_MakeContours(e)) return 1;
+      if (!e->groups || _gd_make_contours(e)) return 1;
     }
   }
   return 0;
@@ -790,7 +779,7 @@ static int ContoursDraw(void *el, int xIsLog, int yIsLog)
   int value= 0;
   if (e->el.hidden || nLevels<=0) return 0;
   if (!groups) return 1;
-  while (nLevels--) value|= Gd_DrawRing(*groups++, xIsLog, yIsLog, 0, 1);
+  while (nLevels--) value|= _gd_draw_ring(*groups++, xIsLog, yIsLog, 0, 1);
   return value;
 }
 
@@ -836,7 +825,7 @@ static int SystemDraw(void *el, int xIsLog, int yIsLog)
 
   /* Draw the elements for this coordinate system before the ticks.  */
   gp_clipping= 1;   /* turn on clipping for elements */
-  if (hflags & 1) Gd_DrawRing(e->elements, xIsLog, yIsLog, e, 0);
+  if (hflags & 1) _gd_draw_ring(e->elements, xIsLog, yIsLog, e, 0);
 
   /* Draw tick marks on top of elements.  If the user has chosen a style
      where the ticks overlap the viewport, he probably wants the ticks
@@ -972,7 +961,7 @@ static int GetLogZ(long n, gp_real_t *z, gp_real_t **zlog,
   if (zl) {
     long i;
     for (i=0 ; i<n ; i++) zl[i]= SAFELOG(z[i]);
-    if (zmin) Gd_ScanZ(n, zl, zmin, zmax);
+    if (zmin) _gd_scan_z(n, zl, zmin, zmax);
   } else {
     strcpy(gp_error, "memory manager failed in Gd log function");
     return -1;
@@ -989,7 +978,7 @@ static int Get_LogZ(long n, long nndc, gp_real_t *z, gp_real_t **zlog,
     long i;
     for (i=0 ; i<nndc ; i++) zl[i]= z[i];
     for ( ; i<n ; i++) zl[i]= SAFELOG(z[i]);
-    if (zmin) Gd_ScanZ(n-nndc, zl+nndc, zmin, zmax);
+    if (zmin) _gd_scan_z(n-nndc, zl+nndc, zmin, zmax);
   } else {
     strcpy(gp_error, "memory manager failed in Gd_log function");
     return -1;
@@ -1219,9 +1208,9 @@ static int MeshXYScan(void *vMeshEl, int flags, gp_box_t *limits, gp_box_t *box)
     if (!meshEl->xlog && GetLogZ(len, mesh->x, &meshEl->xlog, 0, 0))
       return 1;
     for (i=0 ; i<len ; ) {
-      Gd_NextMeshBlock(&i, &j, len, iMax, reg, region);
+      _gd_next_mesh_block(&i, &j, len, iMax, reg, region);
       if (i>=len) break;
-      Gd_ScanZ(j-i, meshEl->xlog+i, &xmin, &xmax);
+      _gd_scan_z(j-i, meshEl->xlog+i, &xmin, &xmax);
       if (first) {
         meshEl->logBox.xmin= xmin;
         meshEl->logBox.xmax= xmax;
@@ -1250,9 +1239,9 @@ static int MeshXYScan(void *vMeshEl, int flags, gp_box_t *limits, gp_box_t *box)
     if (!meshEl->ylog && GetLogZ(len, mesh->y, &meshEl->ylog, 0, 0))
       return 1;
     for (i=0 ; i<len ; ) {
-      Gd_NextMeshBlock(&i, &j, len, iMax, reg, region);
+      _gd_next_mesh_block(&i, &j, len, iMax, reg, region);
       if (i>=len) break;
-      Gd_ScanZ(j-i, meshEl->ylog+i, &ymin, &ymax);
+      _gd_scan_z(j-i, meshEl->ylog+i, &ymin, &ymax);
       if (first) {
         meshEl->logBox.ymin= ymin;
         meshEl->logBox.ymax= ymax;
@@ -1282,7 +1271,7 @@ static int MeshXYScan(void *vMeshEl, int flags, gp_box_t *limits, gp_box_t *box)
     int *reg= mesh->reg, first= 1;
     tbox= *limits;
     for (i=0 ; i<len ; ) {
-      Gd_NextMeshBlock(&i, &j, len, iMax, reg, region);
+      _gd_next_mesh_block(&i, &j, len, iMax, reg, region);
       if (i>=len) break;
       ScanRXY(j-i, x+i, y+i, flags, limits, &tbox);
       if (first) { *box= tbox;  first= 0; }

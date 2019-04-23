@@ -429,3 +429,27 @@
 #gxCurrentSys     gx_current_sys # FIXME: duplicate
 #gxCurrentX       gx_current_x # FIXME: duplicate
 #gxCurrentY       gx_current_y # FIXME: duplicate
+
+# Now in gist/private.h
+ GaGetScratchP      _ga_get_scratch_p
+ GaGetScratchS      _ga_get_scratch_s
+ gaxScratch         _ga_scratch_x
+ gayScratch         _ga_scratch_y
+ gasScratch         _ga_scratch_s
+ GdKillSystems      _gd_kill_systems
+ Gd_KillRing        _gd_kill_ring
+ Gd_DrawRing        _gd_draw_ring
+ Gd_KillMeshXY      _gd_draw_mesh_xy
+ Gd_MeshXYGet       _gd_get_mesh_xy
+ Gd_LinesSubSet     _gd_lines_subset
+ Gd_MakeContours    _gd_make_contours
+ Gd_NextMeshBlock   _gd_next_mesh_block
+ GetDrawingOpTables _gd_get_drawing_operations
+ Gd_ScanZ           _gd_scan_z
+ GistOpen           gp_open
+ GpNiceUnit         _gp_nice_unit
+ HLevelHook         _gh_hook
+#GxJustifyNext      justify_next # now static
+#GxJustifyText      justify_text # now static
+ gdNowRendering     now_rendering # static
+ gdMaxRendered      max_rendered # static

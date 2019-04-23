@@ -243,7 +243,7 @@ gh_get_mouse(int *sys, double *x, double *y)
 /* xbasic.c supplies a hook in its error handlers to allow the hlevel
    to clear its display devices */
 static void ShutDownDev(gp_engine_t *engine);
-extern void (*HLevelHook)(gp_engine_t *engine);
+extern void (*_gh_hook)(gp_engine_t *engine);
 
 static void ShutDownDev(gp_engine_t *engine)
 {
@@ -262,16 +262,16 @@ static void ShutDownDev(gp_engine_t *engine)
   }
 }
 
-int gh_set_xhandler(void (*ErrHandler)(char *errMsg))
+int gh_set_xhandler(void (*handler)(char *msg))
 {
-  gp_set_xhandler(ErrHandler);
-  HLevelHook= &ShutDownDev;
+  gp_set_xhandler(handler);
+  _gh_hook = &ShutDownDev;
   return 0;
 }
 
 #else
 /* ARGSUSED */
-int gh_set_xhandler(void (*ErrHandler)(char *errMsg))
+int gh_set_xhandler(void (*handler)(char *msg))
 {
   /* no-op */
   return 0;

@@ -10,6 +10,7 @@
 
 #include "gist/draw.h"
 #include "gist/text.h"
+#include "gist/private.h"
 #include "play/std.h"
 
 /* Generating default contour labels requires sprintf function */
@@ -20,9 +21,6 @@
 extern double log10(double);
 #define SAFELOG0 (-999.)
 #define SAFELOG(x) ((x)>0? log10(x) : ((x)<0? log10(-(x)) : -999.))
-
-/* In tick.c */
-extern gp_real_t GpNiceUnit(gp_real_t finest, int *base, int *power);
 
 extern double floor(double);
 extern double ceil(double);
@@ -48,12 +46,13 @@ static ge_system_t *saveSy;
 static gd_element_t *saveEl;
 static int saveCn;
 
-gd_properties_t gd_properties= {
+gd_properties_t gd_properties = {
   0, 0,
   {
   {7.5, 50., 1.2, 1.2, 4, 1, GA_TICK_L|GA_TICK_U|GA_TICK_OUT|GA_LABEL_L,
    0.0, 14.0*GP_ONE_POINT,
-   {12.*GP_ONE_POINT, 8.*GP_ONE_POINT, 5.*GP_ONE_POINT, 3.*GP_ONE_POINT, 2.*GP_ONE_POINT},
+   {12.*GP_ONE_POINT, 8.*GP_ONE_POINT, 5.*GP_ONE_POINT, 3.*GP_ONE_POINT,
+    2.*GP_ONE_POINT},
      {PL_FG, GP_LINE_SOLID, 1.0},
      {PL_FG, GP_LINE_DOT, 1.0},
      {PL_FG, GP_FONT_HELVETICA, 14.*GP_ONE_POINT,
@@ -61,7 +60,8 @@ gd_properties_t gd_properties= {
      .425, .5-52.*GP_ONE_POINT},
   {7.5, 50., 1.2, 1.2, 3, 1, GA_TICK_L|GA_TICK_U|GA_TICK_OUT|GA_LABEL_L,
    0.0, 14.0*GP_ONE_POINT,
-   {12.*GP_ONE_POINT, 8.*GP_ONE_POINT, 5.*GP_ONE_POINT, 3.*GP_ONE_POINT, 2.*GP_ONE_POINT},
+   {12.*GP_ONE_POINT, 8.*GP_ONE_POINT, 5.*GP_ONE_POINT, 3.*GP_ONE_POINT,
+    2.*GP_ONE_POINT},
      {PL_FG, GP_LINE_SOLID, 1.0},
      {PL_FG, GP_LINE_DOT, 1.0},
      {PL_FG, GP_FONT_HELVETICA, 14.*GP_ONE_POINT,
@@ -81,7 +81,7 @@ gd_properties_t gd_properties= {
   0, 0, 0.0,
   0, 0, 0,  0 };
 
-gd_drawing_t *gd_draw_list= 0;
+gd_drawing_t *gd_draw_list = NULL;
 
 static void ClearDrawing(gd_drawing_t *drawing);
 static void Damage(ge_system_t *sys, gd_element_t *el);
@@ -91,10 +91,8 @@ static void NiceAdjust(gp_real_t *umin, gp_real_t *umax, int isLog, int isMin);
 static void EqAdjust(gp_real_t *umin, gp_real_t *umax);
 static void EmptyAdjust(gp_real_t *umin, gp_real_t *umax, int doMin, int doMax);
 static void EqualAdjust(gp_real_t *umin, gp_real_t *umax, int doMin, int doMax);
-extern int Gd_DrawRing(void *elv, int xIsLog, int yIsLog,
-                       ge_system_t *sys, int t);
-static void InitLegends(int contours, ge_system_t *systems, gd_element_t *elements,
-                        int size);
+static void InitLegends(int contours, ge_system_t *systems,
+                        gd_element_t *elements, int size);
 static void NextContours(void);
 static int NextRing(void);
 static int NextLegend(void);
@@ -103,20 +101,12 @@ static int BuildLegends(int more, int contours, ge_system_t *systems,
 static int MemoryError(void);
 static void *Copy1(const void *orig, long size);
 static void *Copy2(void *x1, const void *orig1, const void *orig2, long size);
-extern void Gd_ScanZ(long n, const gp_real_t *z, gp_real_t *zmin, gp_real_t *zmax);
-static void ScanXY(long n, const gp_real_t *x, const gp_real_t *y, gp_box_t *extrema);
+static void scan_xy(long n, const gp_real_t *x, const gp_real_t *y, gp_box_t *extrema);
 
-extern void Gd_NextMeshBlock(long *ii, long *jj, long len, long iMax,
-                             int *reg, int region);
-extern void Gd_MeshXYGet(void *vMeshEl);
 static int AutoMarker(ga_line_attribs_t *dl, int number);
-extern int Gd_MakeContours(ge_contours_t *con);
 static void GuessBox(gp_box_t *box, gp_box_t *viewport, ga_tick_style_t *ticks);
 static gd_element_t *NextConCurve(gd_element_t *el);
 static int GeFindIndex(int id, ge_system_t *sys);
-
-extern void Gd_KillRing(void *elv);
-extern void Gd_KillMeshXY(void *vMeshEl);
 
 static void (*DisjointKill)(void *el);
 static void (*FilledKill)(void *el);
@@ -125,13 +115,11 @@ static void (*ContoursKill)(void *el);
 static void (*SystemKill)(void *el);
 static int (*LinesGet)(void *el);
 static int (*ContoursGet)(void *el);
-extern void Gd_LinesSubSet(void *el);
 static int (*SystemDraw)(void *el, int xIsLog, int yIsLog);
 
 /* ------------------------------------------------------------------------ */
 /* Set virtual function tables */
 
-extern gd_operations_t *GetDrawingOpTables(void);  /* in draw0.c */
 static gd_operations_t *opTables= 0;
 
 /* ------------------------------------------------------------------------ */
@@ -142,7 +130,7 @@ gd_drawing_t *gd_new_drawing(char *gsFile)
   gd_drawing_t *drawing= pl_malloc(sizeof(gd_drawing_t));
   if (!drawing) return 0;
   if (!opTables) {
-    opTables= GetDrawingOpTables();
+    opTables = _gd_get_drawing_operations();
     DisjointKill= opTables[GD_ELEM_DISJOINT].Kill;
     FilledKill= opTables[GD_ELEM_FILLED].Kill;
     VectorsKill= opTables[GD_ELEM_VECTORS].Kill;
@@ -195,7 +183,7 @@ void gd_kill_drawing(gd_drawing_t *drawing)
   }
 
   ClearDrawing(drawing);
-  Gd_KillRing(drawing->systems);
+  _gd_kill_ring(drawing->systems);
 
   if (drawing==gd_draw_list) gd_draw_list= drawing->next;
   else {
@@ -209,13 +197,11 @@ void gd_kill_drawing(gd_drawing_t *drawing)
   pl_free(drawing);
 }
 
-extern void GdKillSystems(void);
-
-void GdKillSystems(void)
+void _gd_kill_systems(void)
 {
   if (!currentDr) return;
   ClearDrawing(currentDr);
-  Gd_KillRing(currentDr->systems);
+  _gd_kill_ring(currentDr->systems);
   currentDr->systems= 0;
   currentDr->nSystems= 0;
 }
@@ -284,7 +270,7 @@ static void ClearDrawing(gd_drawing_t *drawing)
   ge_system_t *sys, *sys0= drawing->systems;
   int nSystems= 0;
   if ((sys= sys0)) do {
-    Gd_KillRing(sys->elements);
+    _gd_kill_ring(sys->elements);
     sys->elements= 0;
     sys->rescan= 0;
     sys->unscanned= -1;
@@ -292,7 +278,7 @@ static void ClearDrawing(gd_drawing_t *drawing)
     sys= (ge_system_t *)sys->el.next;
     nSystems++;
   } while (sys!=sys0);
-  Gd_KillRing(drawing->elements);
+  _gd_kill_ring(drawing->elements);
   drawing->elements= 0;
   drawing->nElements= 0;
   drawing->nSystems= nSystems;
@@ -314,25 +300,24 @@ static void ClearDrawing(gd_drawing_t *drawing)
 /* The GIST display list is called a "drawing".  Any number of drawings
    may exist, but only one may be active at a time.
 
-   The entire drawing is rendered on all active engines by calling
-   gd_draw(0).  The drawing sequence is preceded by gp_clear(0, GP_CONDITIONALLY).
+   The entire drawing is rendered on all active engines by calling gd_draw(0).
+   The drawing sequence is preceded by gp_clear(0, GP_CONDITIONALLY).
 
-   gd_draw(-1) is like gd_draw(0) except the drawing is damaged to force
-   all data to be rescanned as well.
+   gd_draw(-1) is like gd_draw(0) except the drawing is damaged to force all
+   data to be rescanned as well.
 
    gd_draw(1) draws only the changes since the previous gd_draw.  Changes can
    be either destructive or non-destructive:
 
-     If the engine->damage box is set, then some operation has
-     damaged that part of the drawing since the prior gd_draw
-     (such as changing a line style or plot limits).  The damaged
-     section is cleared, then the display list is traversed, redrawing
-     all elements which may intersect the damaged box, clipped to
-     the damaged box.
+     If the engine->damage box is set, then some operation has damaged that
+     part of the drawing since the prior gd_draw (such as changing a line style
+     or plot limits).  The damaged section is cleared, then the display list is
+     traversed, redrawing all elements which may intersect the damaged box,
+     clipped to the damaged box.
 
-     Then, any elements which were added since the prior gd_draw
-     (and which caused no damage like a change in limits) are
-     drawn as non-destructive updates.
+     Then, any elements which were added since the prior gd_draw (and which
+     caused no damage like a change in limits) are drawn as non-destructive
+     updates.
 
  */
 
@@ -393,7 +378,7 @@ static void NiceAdjust(gp_real_t *umin, gp_real_t *umax, int isLog, int isMin)
       du= 6.0;
     }
   }
-  unit= GpNiceUnit(du/3.0, &base, &power);
+  unit= _gp_nice_unit(du/3.0, &base, &power);
   if (!isLog || reverted || unit>0.75) {
     un= unit*floor(un/unit);
     ux= unit*ceil(ux/unit);
@@ -559,7 +544,7 @@ int gd_scan(ge_system_t *sys)
   return 0;
 }
 
-int Gd_DrawRing(void *elv, int xIsLog, int yIsLog, ge_system_t *sys, int t)
+int _gd_draw_ring(void *elv, int xIsLog, int yIsLog, ge_system_t *sys, int t)
 {
   gd_element_t *el0, *el= elv;
   gp_box_t adjustBox, *box;
@@ -653,7 +638,7 @@ int gd_draw(int changesOnly)
   /* Do elements outside of coordinate systems */
   gp_set_transform(&unitTrans);
   gp_clipping= 0;
-  value|= Gd_DrawRing(currentDr->elements, 0, 0, (ge_system_t *)0, 0);
+  value|= _gd_draw_ring(currentDr->elements, 0, 0, (ge_system_t *)0, 0);
 
   /* Give engines a chance to clean up after a drawing */
   _gd_end_dr();
@@ -938,7 +923,7 @@ static void *Copy2(void *x1, const void *orig1, const void *orig2, long size)
   return x2;
 }
 
-void Gd_ScanZ(long n, const gp_real_t *z, gp_real_t *zmin, gp_real_t *zmax)
+void _gd_scan_z(long n, const gp_real_t *z, gp_real_t *zmin, gp_real_t *zmax)
 {
   long i;
   gp_real_t zn, zx;
@@ -951,10 +936,10 @@ void Gd_ScanZ(long n, const gp_real_t *z, gp_real_t *zmin, gp_real_t *zmax)
   *zmax= zx;
 }
 
-static void ScanXY(long n, const gp_real_t *x, const gp_real_t *y, gp_box_t *extrema)
+static void scan_xy(long n, const gp_real_t *x, const gp_real_t *y, gp_box_t *extrema)
 {
-  Gd_ScanZ(n, x, &extrema->xmin, &extrema->xmax);
-  Gd_ScanZ(n, y, &extrema->ymin, &extrema->ymax);
+  _gd_scan_z(n, x, &extrema->xmin, &extrema->xmax);
+  _gd_scan_z(n, y, &extrema->ymin, &extrema->ymax);
 }
 
 void ge_add_element(int type, gd_element_t *element)
@@ -991,8 +976,8 @@ void ge_add_element(int type, gd_element_t *element)
   else Damage((ge_system_t *)0, element);
 }
 
-void Gd_NextMeshBlock(long *ii, long *jj, long len, long iMax,
-                      int *reg, int region)
+void _gd_next_mesh_block(long *ii, long *jj, long len, long iMax,
+                         int *reg, int region)
 {   /* Find next contiguous run of mesh points in given region */
   long i= *ii;
   long j= *jj;
@@ -1053,7 +1038,7 @@ long ge_get_mesh(int noCopy, ga_mesh_t *meshin, int region, void *vMeshEl)
     meshEl->noCopy|= GD_NOCOPY_REG;
   } else {
     mesh->reg= reg= Copy1(meshin->reg, sizeof(int)*(len+iMax+1));
-    if (!reg) { Gd_KillMeshXY(vMeshEl);  pl_free(vMeshEl);  return 0; }
+    if (!reg) { _gd_kill_mesh_xy(vMeshEl);  pl_free(vMeshEl);  return 0; }
   }
 
   /* Be sure region array is legal */
@@ -1067,11 +1052,11 @@ long ge_get_mesh(int noCopy, ga_mesh_t *meshin, int region, void *vMeshEl)
     gp_box_t box;
     int first= 1;
 
-    /* Use ScanXY on the longest contiguous run(s) of points */
+    /* Use scan_xy on the longest contiguous run(s) of points */
     for (i=0 ; i<len ; ) {
-      Gd_NextMeshBlock(&i, &j, len, iMax, reg, region);
+      _gd_next_mesh_block(&i, &j, len, iMax, reg, region);
       if (i>=len) break;
-      ScanXY(j-i, mesh->x+i, mesh->y+i, &box);
+      scan_xy(j-i, mesh->x+i, mesh->y+i, &box);
       if (first) { *linBox= box;  first= 0; }
       else gp_swallow(linBox, &box);
       i= j+1;
@@ -1080,12 +1065,12 @@ long ge_get_mesh(int noCopy, ga_mesh_t *meshin, int region, void *vMeshEl)
       linBox->xmin= linBox->xmax= linBox->ymin= linBox->ymax= 0.0;
 
   } else {
-    ScanXY(len, mesh->x, mesh->y, linBox);
+    scan_xy(len, mesh->x, mesh->y, linBox);
   }
   if (!currentSy) meshEl->el.box= *linBox;  /* for ge_add_element */
 
   /* copy mesh properties to gd_properties */
-  Gd_MeshXYGet(vMeshEl);
+  _gd_get_mesh_xy(vMeshEl);
 
   return len;
 }
@@ -1126,7 +1111,7 @@ int gd_add_lines(long n, const gp_real_t *px, const gp_real_t *py)
   el->n= n;
 
   /* scan for min and max of x and y arrays */
-  ScanXY(n, px, py, &el->linBox);
+  scan_xy(n, px, py, &el->linBox);
   if (!currentSy) el->el.box= el->linBox;  /* for ge_add_element */
 
   /* copy relevant attributes from ga_attributes
@@ -1170,8 +1155,8 @@ int gd_add_disjoint(long n, const gp_real_t *px, const gp_real_t *py,
   el->n= n;
 
   /* scan for min and max of x and y arrays */
-  ScanXY(n, px, py, &box);
-  ScanXY(n, qx, qy, &el->linBox);
+  scan_xy(n, px, py, &box);
+  scan_xy(n, qx, qy, &el->linBox);
   gp_swallow(&el->linBox, &box);
   if (!currentSy) el->el.box= el->linBox;  /* for ge_add_element */
 
@@ -1269,7 +1254,7 @@ int gd_add_cells(gp_real_t px, gp_real_t py, gp_real_t qx, gp_real_t qy,
       colors+= nColumns;
     }
   }
-  ScanXY(2L, x, y, &linBox);
+  scan_xy(2L, x, y, &linBox);
   if (!currentSy) el->el.box= linBox;  /* for ge_add_element */
 
   /* set base class members */
@@ -1327,8 +1312,8 @@ int gd_add_fill(long n, const gp_color_t *colors, const gp_real_t *px,
   el->n= n;
 
   /* scan for min and max of x and y arrays */
-  if (n<2 || pn[1]>1) ScanXY(ntot, px, py, &el->linBox);
-  else ScanXY(ntot-pn[0], px+pn[0], py+pn[0], &el->linBox);
+  if (n<2 || pn[1]>1) scan_xy(ntot, px, py, &el->linBox);
+  else scan_xy(ntot-pn[0], px+pn[0], py+pn[0], &el->linBox);
   if (!currentSy) el->el.box= el->linBox;  /* for ge_add_element */
 
   /* copy relevant attributes from ga_attributes
@@ -1487,7 +1472,7 @@ int gd_add_vectors(int noCopy, ga_mesh_t *mesh, int region,
   return el->el.number;
 }
 
-int Gd_MakeContours(ge_contours_t *con)
+int _gd_make_contours(ge_contours_t *con)
 {
   long n;
   gp_real_t dphase, *px, *py;
@@ -1521,7 +1506,7 @@ int Gd_MakeContours(ge_contours_t *con)
         el->xlog= el->ylog= 0;
 
         /* scan for min and max of x and y arrays */
-        ScanXY(n, px, py, &el->linBox);
+        scan_xy(n, px, py, &el->linBox);
         if (!currentSy) el->el.box= el->linBox;  /* for ge_add_element */
 
         el->el.ops= opTables + GD_ELEM_LINES;
@@ -1605,7 +1590,7 @@ int gd_add_contours(int noCopy, ga_mesh_t *mesh, int region,
     el->levels= Copy1(levels, sizeof(gp_real_t)*nLevels);
     if (!el->levels) { ContoursKill(el);  return -1; }
     el->groups= (ge_lines_t **)pl_malloc(sizeof(ge_lines_t *)*nLevels);
-    if (!el->groups || Gd_MakeContours(el)) { ContoursKill(el);  return -1; }
+    if (!el->groups || _gd_make_contours(el)) { ContoursKill(el);  return -1; }
   } else {
     nLevels= 0;
     el->levels= 0;
@@ -1950,10 +1935,10 @@ int gd_edit(int xyzChanged)
     if (el) {
       /* legend only changes on first piece of contour */
       el->legend= gd_properties.legend;
-      Gd_LinesSubSet(el);
+      _gd_lines_subset(el);
       /* other line properties propagate to all contour pieces
          -- but NEVER attempt to change the (x,y) values */
-      while ((el= NextConCurve(el))) Gd_LinesSubSet(el);
+      while ((el= NextConCurve(el))) _gd_lines_subset(el);
     }
     return 0;
   }
@@ -2141,7 +2126,7 @@ gp_box_t *gd_clear_system(void)
   /* Intended for use with animation... */
   if (!currentDr || !currentSy) return 0;
 
-  Gd_KillRing(currentSy->elements);
+  _gd_kill_ring(currentSy->elements);
   currentSy->elements= 0;
   currentSy->el.number= currentSy->unscanned= -1;
   currentSy->rescan= 0;
