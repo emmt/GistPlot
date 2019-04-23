@@ -97,6 +97,6 @@ void
 pl_xhandler(void (*abort_hook)(void),
            void (*on_exception)(int signal, char *errmsg))
 {
-  u_abort_hook = abort_hook;   /* replaces pl_abort */
-  u_exception = on_exception;  /* when _pl_u_waiter detects pl_signalling */
+  _pl_u_abort_hook = abort_hook;   /* replaces pl_abort */
+  _pl_u_exception = on_exception;  /* when _pl_u_waiter detects pl_signalling */
 }

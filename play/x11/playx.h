@@ -8,8 +8,8 @@
  * Read the accompanying LICENSE file for details.
  */
 
-#ifndef _NPLAYX_H
-#define _NPLAYX_H 1
+#ifndef _PLAYX_H
+#define _PLAYX_H 1
 
 /* X11 implementation files include this instead of play2.h */
 #include <play/win.h>
@@ -19,8 +19,8 @@ extern "C" {
 #endif
 
 /* point list for polylines, fills, dots, segments */
-extern XPoint x_pt_list[2050];
-extern int x_pt_count;
+extern XPoint _pl_x_pt_list[2050];
+extern int _pl_x_pt_count;
 
 /* retrieve pl_win_t* given Window id number, Display* (for event handling)
  * - the pl_win_t context can be used to back up the hierarchy further
@@ -31,12 +31,12 @@ extern pl_win_t *_pl_x_pwin(pl_x_display_t *xdpy, Drawable d);
 /* ordinary and I/O X error handlers */
 extern int _pl_x_err_handler(Display *dpy, XErrorEvent *event);
 extern int _pl_x_panic(Display *dpy);
-extern void (*x_on_panic)(pl_scr_t *s);
+extern void (*_pl_x_on_panic)(pl_scr_t *s);
 
 /* arrange to deliver X events for an X window to the event
  * handler for the corresponding pl_win_t
  * this is virtual to allow a simpler mode in case pl_gui is never called */
-extern void (*x_wire_events)(pl_x_display_t *xdpy, int disconnect);
+extern void (*_pl_x_wire_events)(pl_x_display_t *xdpy, int disconnect);
 
 /* routines to convert Gist colors, linestyles, and fonts to X11 */
 extern XFontStruct *_pl_x_font(pl_x_display_t *xdpy, int font, int pixsize);
@@ -46,13 +46,9 @@ extern pl_col_t _pl_x_getpixel(pl_win_t *w, pl_col_t color);
 extern void _pl_x_nuke_shared(pl_scr_t *s);
 
 /* optional X resource values (class Gist) */
-extern char *x_xfont;       /* boldfont, font, Font */
-extern char *x_foreground;  /* foreground, Foreground */
-extern char *x_background;  /* background, Background */
-extern char *x_guibg;       /* guibg */
-extern char *x_guifg;       /* guifg */
-extern char *x_guihi;       /* guihi */
-extern char *x_guilo;       /* guilo */
+extern char *_pl_x_xfont;       /* boldfont, font, Font */
+extern char *_pl_x_foreground;  /* foreground, Foreground */
+extern char *_pl_x_background;  /* background, Background */
 
 extern Cursor _pl_x_cursor(pl_scr_t *s, int cursor);
 
@@ -68,4 +64,4 @@ extern void _pl_x_cmzap(Display *dpy, Colormap *pcm);
 }
 #endif
 
-#endif /* _NPLAYX_H */
+#endif /* _PLAYX_H */

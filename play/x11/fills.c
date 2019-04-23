@@ -21,14 +21,14 @@ pl_fill(pl_win_t *w, int convexity)
   Display *dpy = s->xdpy->dpy;
   GC gc = _pl_x_getgc(s, w, FillSolid);
   int nmx = (XMaxRequestSize(dpy)-3)/2;
-  int n = x_pt_count;
-  x_pt_count = 0;
+  int n = _pl_x_pt_count;
+  _pl_x_pt_count = 0;
   /* note: this chunking does not produce a correct plot, but
    *       it does prevent Xlib from crashing an R4 server
    * you just can't fill a polygon with too many sides */
   while (n>2) {
     if (n<nmx) nmx = n;
-    XFillPolygon(dpy, w->d, gc, x_pt_list, nmx,
+    XFillPolygon(dpy, w->d, gc, _pl_x_pt_list, nmx,
                  x_shape[convexity], CoordModeOrigin);
     n -= nmx;
   }

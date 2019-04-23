@@ -14,6 +14,8 @@
 
 #include <string.h>
 
+extern char* gp_argv0; /* in gread.c */
+
 static void g_on_expose(void *c, int *xy);
 static void g_on_destroy(void *c);
 static void g_on_resize(void *c,int w,int h);
@@ -446,8 +448,7 @@ justify_next(const char **text, int *ix, int *iy)
  */
 /* hack to disconnect if last engine destroyed (see gh_before_wait) */
 static void g_do_disconnect(void);
-extern void (*g_pending_task)(void);
-void (*g_pending_task)(void) = 0;
+void (*gh_pending_task)(void) = NULL;
 
 static void
 Kill(gp_engine_t *engine)
@@ -1244,24 +1245,23 @@ gx_recenter(gp_x_engine_t *xeng, int width, int height)
 
 /* ------------------------------------------------------------------------ */
 
-typedef struct g_scr g_scr;
-struct g_scr {
+typedef struct _g_scr g_scr_t;
+struct _g_scr {
   char *name;
   int number;
   pl_scr_t *s;
 };
-static g_scr *g_screens = 0;
+static g_scr_t *g_screens = 0;
 static int n_screens = 0;
 
 /* ARGSUSED */
 void
 gp_initializer(int *pargc, char *argv[])
 {
-  extern char *g_argv0;
-  g_argv0 = argv? argv[0] : 0;
+  gp_argv0 = argv != NULL ? argv[0] : NULL;
   pl_gui(&g_on_expose, &g_on_destroy, &g_on_resize, &g_on_focus,
-        &g_on_key, &g_on_click, &g_on_motion, &g_on_deselect,
-        &g_on_panic);
+         &g_on_key, &g_on_click, &g_on_motion, &g_on_deselect,
+         &g_on_panic);
 }
 
 pl_scr_t *
@@ -1304,7 +1304,7 @@ gx_connect(char *displayName)
     for (i=0 ; i<n_screens ; i++) if (!g_screens[i].s) break;
     if (i==n_screens && !(i & (i-1))) {
       int n = i? 2*i : 1;
-      g_screens = pl_realloc(g_screens, sizeof(g_scr)*n);
+      g_screens = pl_realloc(g_screens, sizeof(g_scr_t)*n);
     }
     g_screens[i].number = number;
     g_screens[i].name = displayName? pl_strncat(0, displayName, len) : 0;
@@ -1650,7 +1650,7 @@ g_do_disconnect(void)
       if (s && !pl_wincount(s)) gx_disconnect(s);
     }
   }
-  g_pending_task = 0;
+  gh_pending_task = NULL;
 }
 
 static void
@@ -1672,7 +1672,7 @@ ShutDown(gp_x_engine_t *xeng)
   gp_delete_engine(&xeng->e);
   if (s) {
     if (!pl_wincount(s))
-      g_pending_task = g_do_disconnect;
+      gh_pending_task = g_do_disconnect;
   }
 }
 

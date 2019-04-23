@@ -40,8 +40,8 @@ static void UpdateOrRedraw(int changesOnly);
      2/3:  called from gh_fma (explicit frame advance)
      4/5:  called from gh_hcp (with hardcopy gp_engine_t, not display engine)
  */
-extern void (*gdraw_hook)(gp_engine_t *display, int how);
-void (*gdraw_hook)(gp_engine_t *display, int how)= 0;
+extern void (*gd_draw_hook)(gp_engine_t *display, int how);
+void (*gd_draw_hook)(gp_engine_t *display, int how) = NULL;
 
 /* ------------------------------------------------------------------------ */
 /* See README for description of these control functions */
@@ -62,10 +62,10 @@ static void UpdateOrRedraw(int changesOnly)
   gp_engine_t *display= currentDevice<0? 0 : gh_devices[currentDevice].display;
   if (!display) return;
   gp_preempt(display);
-  if (gdraw_hook) gdraw_hook(display, 0);
+  if (gd_draw_hook != NULL) gd_draw_hook(display, 0);
   gd_draw(changesOnly);
   gp_flush(0);
-  if (gdraw_hook) gdraw_hook(display, 1);
+  if (gd_draw_hook != NULL) gd_draw_hook(display, 1);
   gp_preempt(0);
 }
 
@@ -73,14 +73,11 @@ void (*gh_on_idle)(void) = 0;
 
 void gh_before_wait(void)
 {
+  if (gh_on_idle != NULL) gh_on_idle();
 #ifndef NO_XLIB
-  extern void (*g_pending_task)(void);  /* auto disconnect, see xbasic.c */
-  if (gh_on_idle) gh_on_idle();
-  if (g_pending_task) g_pending_task();
-#else
-  if (gh_on_idle) gh_on_idle();
+  if (gh_pending_task != NULL) gh_pending_task();
 #endif
-  if (currentDevice<0 || !gh_devices[currentDevice].display ||
+  if (currentDevice < 0 || !gh_devices[currentDevice].display ||
       animateOn) return;  /* nothing happens in animate mode until
                            * explicit call to gh_fma */
   UpdateOrRedraw(1);
@@ -101,7 +98,7 @@ void gh_fma(void)
     if (hcp) gp_activate(hcp);
   }
 
-  if (gdraw_hook) gdraw_hook(display, 2);
+  if (gd_draw_hook != NULL) gd_draw_hook(display, 2);
   gd_draw(1);
   if (hcpOn && hcp && gh_devices[currentDevice].doLegends)
     gd_draw_legends(hcp);
@@ -109,7 +106,7 @@ void gh_fma(void)
   gp_flush(0);
   if (animateOn!=1) gd_clear(0);
   else gd_clear_system();
-  if (gdraw_hook) gdraw_hook(display, 3);
+  if (gd_draw_hook != NULL) gd_draw_hook(display, 3);
 
   if (hcpOn && hcp) {
     gp_clear(hcp, GP_CONDITIONALLY);
@@ -134,13 +131,13 @@ void gh_hcp(void)
   if (!hcp) hcp= gh_hcp_default;
   if (!hcp) return;
   gp_preempt(hcp);
-  if (gdraw_hook) gdraw_hook(hcp, 4);
+  if (gd_draw_hook != NULL) gd_draw_hook(hcp, 4);
   gd_draw(0);
   /* NB- must be very careful not to Preempt twice with gd_draw_legends */
   if (gh_devices[currentDevice].doLegends) gd_draw_legends(0);
   gp_clear(0, GP_ALWAYS);
   gp_flush(0);
-  if (gdraw_hook) gdraw_hook(hcp, 5);
+  if (gd_draw_hook != NULL) gd_draw_hook(hcp, 5);
   gp_preempt(0);
 }
 

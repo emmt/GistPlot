@@ -11,10 +11,6 @@
 #include "config.h"
 #include "playx.h"
 
-char *x_xfont = 0;       /* boldfont, font, Font */
-char *x_foreground = 0;  /* foreground, Foreground */
-char *x_background = 0;  /* background, Background */
-char *x_guibg = 0;       /* guibg */
-char *x_guifg = 0;       /* guifg */
-char *x_guihi = 0;       /* guihi */
-char *x_guilo = 0;       /* guilo */
+char *_pl_x_xfont      = NULL; /* boldfont, font, Font */
+char *_pl_x_foreground = NULL; /* foreground, Foreground */
+char *_pl_x_background = NULL; /* background, Background */

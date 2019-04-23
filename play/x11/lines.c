@@ -18,11 +18,11 @@ pl_dots(pl_win_t *w)
   Display *dpy = s->xdpy->dpy;
   GC gc = _pl_x_getgc(s, w, FillSolid);
   int nmx = XMaxRequestSize(dpy)-3;
-  int n = x_pt_count;
-  x_pt_count = 0;
+  int n = _pl_x_pt_count;
+  _pl_x_pt_count = 0;
   while (n>0) {
     if (n<nmx) nmx = n;
-    XDrawPoints(dpy, w->d, gc, x_pt_list, nmx, CoordModeOrigin);
+    XDrawPoints(dpy, w->d, gc, _pl_x_pt_list, nmx, CoordModeOrigin);
     n -= nmx;
   }
   if (pl_signalling) pl_abort();
@@ -35,11 +35,11 @@ pl_lines(pl_win_t *w)
   Display *dpy = s->xdpy->dpy;
   GC gc = _pl_x_getgc(s, w, FillSolid);
   int nmx = XMaxRequestSize(dpy)-3;
-  int n = x_pt_count;
-  x_pt_count = 0;
+  int n = _pl_x_pt_count;
+  _pl_x_pt_count = 0;
   while (n>1) {
     if (n<nmx) nmx = n;
-    XDrawLines(dpy, w->d, gc, x_pt_list, nmx, CoordModeOrigin);
+    XDrawLines(dpy, w->d, gc, _pl_x_pt_list, nmx, CoordModeOrigin);
     n -= nmx;
   }
   if (pl_signalling) pl_abort();
@@ -52,12 +52,12 @@ pl_segments(pl_win_t *w)
   Display *dpy = s->xdpy->dpy;
   GC gc = _pl_x_getgc(s, w, FillSolid);
   int nmx = (XMaxRequestSize(dpy)-3)/2;
-  int n = x_pt_count / 2;
-  x_pt_count = 0;
+  int n = _pl_x_pt_count / 2;
+  _pl_x_pt_count = 0;
   while (n>0) {
     if (n<nmx) nmx = n;
     /* note: assume here that XPoint[2] identical to XSegment */
-    XDrawSegments(dpy, w->d, gc, (XSegment *)x_pt_list, nmx);
+    XDrawSegments(dpy, w->d, gc, (XSegment *)_pl_x_pt_list, nmx);
     n -= nmx;
   }
   if (pl_signalling) pl_abort();

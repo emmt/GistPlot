@@ -25,11 +25,11 @@ _pl_x_err_handler(Display *dpy, XErrorEvent *event)
     strcpy(x11_errmsg, "Xlib: ");
     XGetErrorText(dpy, event->error_code, x11_errmsg+6, 83);
     x11_errmsg[89] = '\0';
-    u_errmsg = x11_errmsg;
+    _pl_u_errmsg = x11_errmsg;
     pl_signalling = PL_SIG_SOFT;
     x11_nerrs = 1;
   } else {
-    x11_nerrs++;
+    ++x11_nerrs;
   }
   /* Xlib apparently ignores return value
    * - must return here, or Xlib internal data structures trashed

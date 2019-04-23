@@ -31,6 +31,9 @@
  GisPSEngine         gp_ps_engine
  GisXEngine          gp_x_engine
 
+ GistOpen            gp_open
+ g_argv0             gp_argv0
+
  gist_input_hint     gp_input_hint   # FIXME: global variable
  gist_private_map    gp_private_map  # FIXME: global variable
  gist_rgb_hint       gp_rgb_hint     # FIXME: global variable
@@ -397,6 +400,7 @@
  GhGetMouse      gh_get_mouse
  g_rgb_read      gh_rgb_read # FIXME: duplicate
  g_on_idle       gh_on_idle # FIXME: can be static
+ g_pending_task  gh_pending_task
 
 # gist/xbasic.h
  XBASIC_H         _GIST_XBASIC_H
@@ -446,10 +450,10 @@
  Gd_NextMeshBlock   _gd_next_mesh_block
  GetDrawingOpTables _gd_get_drawing_operations
  Gd_ScanZ           _gd_scan_z
- GistOpen           gp_open
  GpNiceUnit         _gp_nice_unit
  HLevelHook         _gh_hook
 #GxJustifyNext      justify_next # now static
 #GxJustifyText      justify_text # now static
  gdNowRendering     now_rendering # static
  gdMaxRendered      max_rendered # static
+ gdraw_hook         gh_draw_hook

@@ -133,4 +133,7 @@ PL_EXTERN int gh_get_mouse(int *sys, double *x, double *y);
 PL__EXTERN int gh_rgb_read(gp_engine_t *eng, gp_color_t *rgb, long *nx, long *ny);
 PL_EXTERN void (*gh_on_idle)(void);
 
+/* auto disconnect, see xbasic.c */
+PL_EXTERN void (*gh_pending_task)(void);
+
 #endif

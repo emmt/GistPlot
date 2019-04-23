@@ -33,22 +33,31 @@ static int u_sigdbg = 0xffff;
 void
 pl_handler(void (*on_exception)(int signal, char *errmsg))
 {
-  u_exception = on_exception;
-
-  if (u_sigdbg&1) signal(SIGFPE, &_pl_u_sigfpe);
-  if (u_sigdbg&2) {
+  _pl_u_exception = on_exception;
+  if ((u_sigdbg&1) != 0) {
+    signal(SIGFPE, &_pl_u_sigfpe);
+  }
+  if ((u_sigdbg&2) != 0) {
     signal(SIGINT, &u_sigint);
     signal(SIGALRM, &u_sigalrm);
   }
-  if (u_sigdbg&4) signal(SIGSEGV, &u_sigany);
+  if ((u_sigdbg&4) != 0) {
+    signal(SIGSEGV, &u_sigany);
+  }
 #ifdef SIGBUS
-  if (u_sigdbg&8) signal(SIGBUS, &u_sigany);    /* not POSIX */
+  if ((u_sigdbg&8) != 0) {
+    signal(SIGBUS, &u_sigany); /* not POSIX */
+  }
 # define MY_SIGBUS SIGBUS
 #else
 # define MY_SIGBUS 0
 #endif
-  if (u_sigdbg&16) signal(SIGILL, &u_sigany);
-  if (u_sigdbg&32) signal(SIGPIPE, &u_sigany);  /* not ANSI C */
+  if ((u_sigdbg&16) != 0) {
+    signal(SIGILL, &u_sigany);
+  }
+  if ((u_sigdbg&32) != 0) {
+    signal(SIGPIPE, &u_sigany);  /* not ANSI C */
+  }
 }
 
 static int sig_table[] = {

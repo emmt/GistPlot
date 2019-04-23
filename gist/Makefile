@@ -32,6 +32,9 @@ libgist2.a: ../play/libplay2.a $(OBJS)
 	$(AR) r $@ $(OBJS)
 	$(RANLIB) $@
 
+symbols.lst: libgist2.a
+	nm '$<' | sed -r -e '/ [BT] /!d;s/.* [BT] //' | LANG=C sort >'$@'
+
 gist: libgist2.a $(BOBJS) main.o
 	$(CCLOAD) -o $@ main.o $(BOBJS) -L. -lgist2 $(SYS_LIBS)
 
@@ -42,7 +45,7 @@ main.c: ../play/$(GIST_MAIN_C)
 	cp ../play/$(GIST_MAIN_C) main.c
 
 clean::
-	rm -f *~ '#'* *.o *.a core* *.core a.out main.c gist bench
+	rm -f *~ '#'* *.o *.a core* *.core a.out main.c gist bench symbols.lst
 
 distclean:: clean
 	rm -f .gdb*

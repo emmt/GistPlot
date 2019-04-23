@@ -17,11 +17,11 @@ extern void (*u_on_idle)(void);
  * and ANSI C main() semantics */
 extern int _pl_u_main_loop(int (*on_launch)(int,char**), int, char **);
 extern int _pl_u_waiter(int wait);
-extern void (*u_exception)(int signal, char *errmsg);
-extern char *u_errmsg;
+extern void (*_pl_u_exception)(int signal, char *errmsg);
+extern char *_pl_u_errmsg;
 
 /* if set non-zero, pl_abort will call this */
-extern void (*u_abort_hook)(void);
+extern void (*_pl_u_abort_hook)(void);
 
 extern void _pl_u_fpu_setup(int when);
 

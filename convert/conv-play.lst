@@ -376,6 +376,9 @@
  u_track_link    _pl_u_track_link
  u_waiter        _pl_u_waiter
  u_waitfor       _pl_u_waitfor
+ u_abort_hook    _pl_u_abort_hook
+ u_errmsg        _pl_u_errmsg
+ u_exception     _pl_u_exception
 
 # Exported private symbols in play/x11.
  x_clip          _pl_x_clip
@@ -396,6 +399,17 @@
 #x_rgb_palette   _pl_x_rgb_palette
  x_rotzap        _pl_x_rotzap
  x_tmpzap        _pl_x_tmpzap
+ x_pt_list       _pl_x_pt_list
+ x_pt_count      _pl_x_pt_count
+ x_xfont         _pl_x_xfont
+ x_background    _pl_x_background
+ x_foreground    _pl_x_foreground
+#x_guibg         FIXME: unused
+#x_guifg         FIXME: unused
+#x_guihi         FIXME: unused
+#x_guilo         FIXME: unused
+ x_on_panic      _pl_x_on_panic
+ x_wire_events   _pl_x_wire_events
 
 # Exported private symbols in play/win.
  w_worker       _pl_w_worker

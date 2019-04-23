@@ -77,11 +77,10 @@ static char *LegendsRead(char *input, struct GlegRead *dest);
    not done.  '~' is NOT recognized in the given filename.
  */
 
-extern char *g_argv0;
-char *g_argv0 = 0;
+char* gp_argv0 = NULL;
 
-static char *scratch = 0;
-static char *gist_path = 0;
+static char *scratch = NULL;
+static char *gist_path = NULL;
 
 char *
 gp_set_path(char *gpath)
@@ -101,7 +100,7 @@ static char *FormGistPath(void)
   if (!gist_path) {
     char *gistPath = getenv("GISTPATH");
     int len = gistPath? strlen(gistPath) : 0;
-    int len0 = g_argv0? strlen(g_argv0) : 0;
+    int len0 = gp_argv0? strlen(gp_argv0) : 0;
     int lend = gp_default_path? strlen(gp_default_path) : 0;
     char *place;
 
@@ -120,12 +119,12 @@ static char *FormGistPath(void)
     strcpy(place, gp_default_path);
     place += lend;
     /* back up to sibling of directory containing executable */
-    for (len=len0-1 ; len>0 ; len--) if (g_argv0[len]=='/') break;
-    for (len-- ; len>0 ; len--) if (g_argv0[len]=='/') break;
+    for (len=len0-1 ; len>0 ; len--) if (gp_argv0[len]=='/') break;
+    for (len-- ; len>0 ; len--) if (gp_argv0[len]=='/') break;
     if (len > 0) {
       /* tack /g/ sibling of executable directory onto path */
       *(place++) = ':';
-      strncpy(place, g_argv0, ++len);
+      strncpy(place, gp_argv0, ++len);
       place += len;
       strcpy(place, "g");
     }

@@ -15,9 +15,9 @@
 
 #include <setjmp.h>
 
-void (*u_abort_hook)(void)= 0;
-void (*u_exception)(int, char *)= 0;
-char *u_errmsg = 0;
+void (*_pl_u_abort_hook)(void) = NULL;
+void (*_pl_u_exception)(int, char *) = NULL;
+char *_pl_u_errmsg = NULL;
 volatile int pl_signalling = 0;
 
 static int (*u_quitter)(void)= 0;
@@ -49,7 +49,7 @@ void
 pl_abort(void)
 {
   if (!pl_signalling) pl_signalling = PL_SIG_SOFT;
-  if (u_abort_hook) u_abort_hook();
+  if (_pl_u_abort_hook) _pl_u_abort_hook();
   longjmp(u_mainloop, 1);
 }
 
@@ -74,13 +74,13 @@ _pl_u_waiter(int wait)
     /* first priority is to catch any pending signals */
     int i = pl_signalling;
     pl_signalling = 0;
-    if (!fault_loop && u_exception) {
-      fault_loop = 1;    /* don't trust u_exception not to fault */
-      u_exception(i, u_errmsg);
+    if (!fault_loop && _pl_u_exception) {
+      fault_loop = 1;    /* don't trust _pl_u_exception not to fault */
+      _pl_u_exception(i, _pl_u_errmsg);
       serviced_event = 1;
       fault_loop = 0;
     }
-    u_errmsg = 0;
+    _pl_u_errmsg = 0;
 
   } else {
     int have_timeout = 0;

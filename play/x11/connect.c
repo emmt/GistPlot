@@ -81,20 +81,20 @@ pl_connect(char *server_name)
 
   /* find default font */
 
-  if (x_xfont) {
-    opt = x_xfont;
+  if (_pl_x_xfont != NULL) {
+    opt = _pl_x_xfont;
   } else {
     opt = XGetDefault(dpy, "Gist", "boldfont");
-    if (!opt) opt = XGetDefault(dpy, "Gist", "font");
-    if (!opt) opt = XGetDefault(dpy, "Gist", "Font");
+    if (opt == NULL) opt = XGetDefault(dpy, "Gist", "font");
+    if (opt == NULL) opt = XGetDefault(dpy, "Gist", "Font");
   }
-  if (opt) xdpy->font = XLoadQueryFont(dpy, opt);
-  if (!xdpy->font) xdpy->font = XLoadQueryFont(dpy, "9x15bold");
-  if (!xdpy->font) xdpy->font = XLoadQueryFont(dpy, "8x13bold");
-  if (!xdpy->font) xdpy->font = XLoadQueryFont(dpy, "9x15");
-  if (!xdpy->font) xdpy->font = XLoadQueryFont(dpy, "8x13");
-  if (!xdpy->font) xdpy->font = XLoadQueryFont(dpy, "fixed");
-  if (!xdpy->font) {
+  if (opt != NULL) xdpy->font = XLoadQueryFont(dpy, opt);
+  if (xdpy->font == NULL) xdpy->font = XLoadQueryFont(dpy, "9x15bold");
+  if (xdpy->font == NULL) xdpy->font = XLoadQueryFont(dpy, "8x13bold");
+  if (xdpy->font == NULL) xdpy->font = XLoadQueryFont(dpy, "9x15");
+  if (xdpy->font == NULL) xdpy->font = XLoadQueryFont(dpy, "8x13");
+  if (xdpy->font == NULL) xdpy->font = XLoadQueryFont(dpy, "fixed");
+  if (xdpy->font == NULL) {
     /* note: section 6.2.2 of O'Reilly volume one promises that
      * the font associated with the default GC is always loaded */
     XGCValues values;
@@ -106,7 +106,7 @@ pl_connect(char *server_name)
       if (xdpy->font) xdpy->font->fid = values.font;
     }
   }
-  if (!xdpy->font) { /* according to O'Reilly(1) 6.2.2, this is impossible */
+  if (xdpy->font == NULL) { /* according to O'Reilly(1) 6.2.2, this is impossible */
     x_disconnect(xdpy);
     return 0;
   }
@@ -151,7 +151,7 @@ pl_connect(char *server_name)
   xdpy->n_menus = 0;
 
   /* set up X event handler */
-  if (x_wire_events) x_wire_events(xdpy, 0);
+  if (_pl_x_wire_events) _pl_x_wire_events(xdpy, 0);
 
   xdpy->next = _pl_x_displays;
   _pl_x_displays = xdpy;
@@ -159,7 +159,7 @@ pl_connect(char *server_name)
 }
 
 /* if this isn't set by pl_gui, never reference any of the unix event stuff */
-void (*x_wire_events)(pl_x_display_t *xdpy, int disconnect) = 0;
+void (*_pl_x_wire_events)(pl_x_display_t *xdpy, int disconnect) = 0;
 
 /* xdpyndx is index into xdpynative, xdpyplay
  * this is a (perhaps misguided) attempt to assure that the
@@ -238,7 +238,7 @@ x_disconnect(pl_x_display_t *xdpy)
       _pl_x_tmpzap(&xdpy->available[i].names);
     }
     _pl_x_tmpzap(&xdpy->sel_string);
-    if (x_wire_events) x_wire_events(xdpy, 1);
+    if (_pl_x_wire_events) _pl_x_wire_events(xdpy, 1);
     if (!xdpy->panic) XCloseDisplay(dpy);
     while (*pxdpy && *pxdpy!=xdpy) pxdpy = &xdpy->next;
     if (*pxdpy) *pxdpy = xdpy->next;
@@ -358,34 +358,40 @@ x_screen(pl_x_display_t *xdpy, int number)
 
   /* get standard colors */
 
-  if (x_foreground) {
-    opt = x_foreground;
+  if (_pl_x_foreground != NULL) {
+    opt = _pl_x_foreground;
   } else {
     opt = XGetDefault(dpy, "Gist", "foreground");
-    if (!opt) opt = XGetDefault(dpy, "Gist", "Foreground");
+    if (opt == NULL) {
+      opt = XGetDefault(dpy, "Gist", "Foreground");
+    }
   }
-  if (opt && XAllocNamedColor(dpy, cmap, opt,
-                              &s->colors[1], &color)) {
+  if (opt != NULL && XAllocNamedColor(dpy, cmap, opt,
+                                      &s->colors[1], &color)) {
       s->free_colors |= 2;
   } else {
     s->colors[1].pixel = BlackPixel(dpy, number);
     XQueryColor(dpy, cmap, &s->colors[1]);
   }
 
-  if (x_background) {
-    opt = x_background;
+  if (_pl_x_background != NULL) {
+    opt = _pl_x_background;
   } else {
     opt = XGetDefault(dpy, "Gist", "background");
-    if (!opt) opt = XGetDefault(dpy, "Gist", "Background");
+    if (opt == NULL) {
+      opt = XGetDefault(dpy, "Gist", "Background");
+    }
   }
-  if (opt && XAllocNamedColor(dpy, cmap, opt,
-                              &s->colors[0], &color)) {
+  if (opt != NULL && XAllocNamedColor(dpy, cmap, opt,
+                                      &s->colors[0], &color)) {
       s->free_colors |= 1;
   } else {
-    long bright = (long)s->colors[1].red + (long)s->colors[1].green +
-      (long)s->colors[1].blue;
-    s->colors[0].pixel=
-      bright<98302? WhitePixel(dpy, number) : BlackPixel(dpy, number);
+    long bright = ((long)s->colors[1].red +
+                   (long)s->colors[1].green +
+                   (long)s->colors[1].blue);
+    s->colors[0].pixel = (bright < 98302 ?
+                          WhitePixel(dpy, number) :
+                          BlackPixel(dpy, number));
     XQueryColor(dpy, cmap, &s->colors[0]);
   }
 
@@ -394,30 +400,21 @@ x_screen(pl_x_display_t *xdpy, int number)
   s->colors[3].pixel = WhitePixel(dpy, number);
   XQueryColor(dpy, cmap, &s->colors[3]);
 
-  if (XAllocNamedColor(dpy, cmap, "red", &s->colors[4], &color))
-    s->free_colors |= 16;
-  else
-    s->colors[4] = s->colors[1];
-  if (XAllocNamedColor(dpy, cmap, "green", &s->colors[5], &color))
-    s->free_colors |= 32;
-  else
-    s->colors[5] = s->colors[1];
-  if (XAllocNamedColor(dpy, cmap, "blue", &s->colors[6], &color))
-    s->free_colors |= 64;
-  else
-    s->colors[6] = s->colors[1];
-  if (XAllocNamedColor(dpy, cmap, "cyan", &s->colors[7], &color))
-    s->free_colors |= 128;
-  else
-    s->colors[7] = s->colors[1];
-  if (XAllocNamedColor(dpy, cmap, "magenta", &s->colors[8], &color))
-    s->free_colors |= 256;
-  else
-    s->colors[8] = s->colors[1];
-  if (XAllocNamedColor(dpy, cmap, "yellow", &s->colors[9], &color))
-    s->free_colors |= 512;
-  else
-    s->colors[9] = s->colors[1];
+#define alloc_xcolor(name, index)                                       \
+  do {                                                                  \
+    if (XAllocNamedColor(dpy, cmap, name, &s->colors[index], &color)) { \
+      s->free_colors |= (1 << (index));                                 \
+    } else {                                                            \
+      s->colors[index] = s->colors[1];                                  \
+    }                                                                   \
+  } while (0)
+  alloc_xcolor("red",     4);
+  alloc_xcolor("green",   5);
+  alloc_xcolor("blue",    6);
+  alloc_xcolor("cyan",    7);
+  alloc_xcolor("magenta", 8);
+  alloc_xcolor("yellow",  9);
+#undef alloc_xcolor
 
   /* initialize generic graphics context and state */
 
@@ -488,7 +485,7 @@ pl_try_grays(Display *dpy, Colormap cmap, XColor *color, int c, int dc)
   return 0;
 }
 
-void (*x_on_panic)(pl_scr_t *s) = 0;
+void (*_pl_x_on_panic)(pl_scr_t *s) = 0;
 
 void
 pl_disconnect(pl_scr_t *s)
@@ -520,7 +517,7 @@ pl_disconnect(pl_scr_t *s)
     pl_scr_t **pthis = &xdpy->screens;
     while (*pthis && *pthis!=s) pthis = &(*pthis)->next;
     if (*pthis) *pthis = s->next;
-    if (xdpy->panic==1 && x_on_panic) x_on_panic(s);
+    if (xdpy->panic==1 && _pl_x_on_panic) _pl_x_on_panic(s);
     if (!xdpy->screens) x_disconnect(xdpy);
     s->xdpy = 0;
   }

@@ -59,8 +59,8 @@ pl_gui(void (*on_expose)(void *c, int *xy),
   xon_click = on_click;
   xon_motion = on_motion;
   xon_deselect = on_deselect;
-  x_on_panic = on_panic;
-  x_wire_events = &x_wirer;
+  _pl_x_on_panic = on_panic;
+  _pl_x_wire_events = &x_wirer;
 }
 
 void
@@ -83,7 +83,7 @@ pl_gui_query(void (**on_expose)(void *c, int *xy),
   *on_click = xon_click;
   *on_motion = xon_motion;
   *on_deselect = xon_deselect;
-  *on_panic = x_on_panic;
+  *on_panic = _pl_x_on_panic;
 }
 
 static void

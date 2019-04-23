@@ -22,6 +22,7 @@
 
 extern int cgmScaleToFit;
 extern int gp_do_escapes;
+extern char* gp_argv0; /* in gread.c */
 
 /* List of commands in alphabetical order, 0 terminated */
 static char *commandList[]= {
@@ -238,10 +239,7 @@ on_launch(int argc, char *argv[])
 #ifndef NO_XLIB
   gp_initializer(&argc, argv);
 #else
-  {
-    extern char *g_argv0;
-    g_argv0 = argv? argv[0] : 0;
-  }
+  gp_argv0 = argv != NULL ? argv[0] : NULL;
 #endif
 
   return 0;

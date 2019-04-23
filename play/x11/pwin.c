@@ -47,7 +47,7 @@ x_create(pl_scr_t *s, Window parent, int hints, void *ctx,
   pl_win_t *w = pl_malloc(sizeof(pl_win_t));
   if (!w) return 0;
 
-  if (pwin_type==PWIN_MENU && !x_wire_events) goto fail0;
+  if (pwin_type==PWIN_MENU && !_pl_x_wire_events) goto fail0;
 
   w->s = s;
   w->context = ctx;
@@ -71,7 +71,7 @@ x_create(pl_scr_t *s, Window parent, int hints, void *ctx,
 
     if (pl_hinsert(xdpy->id2pwin, PL_IHASH(w->d), w)) goto fail1;
 
-    if (x_wire_events) {
+    if (_pl_x_wire_events) {
       /* note: if parent is completely occluded by its children, it will
        *       never actually receive any Expose events */
       mask = ExposureMask | StructureNotifyMask | FocusChangeMask |
@@ -194,7 +194,7 @@ pl_window(pl_scr_t *s, int width, int height, char *title,
 
     /* windows need to interact properly with window manager */
 
-    if (s->xdpy->wm_delete!=None && x_wire_events)
+    if (s->xdpy->wm_delete!=None && _pl_x_wire_events)
       XSetWMProtocols(dpy, xwin, &s->xdpy->wm_delete, 1);
 
     if (!size_hints) size_hints = XAllocSizeHints();
@@ -235,11 +235,11 @@ pl_window(pl_scr_t *s, int width, int height, char *title,
      * - use class to distinguish above */
     /* XSetTransientForHint(dpy, w->d, main_window); */
 
-    if (!x_wire_events) XSelectInput(dpy, w->d, ExposureMask);
+    if (!_pl_x_wire_events) XSelectInput(dpy, w->d, ExposureMask);
 
     XMapWindow(dpy, w->d);
 
-    if (!x_wire_events) {
+    if (!_pl_x_wire_events) {
       /* support event-free operation when pl_gui never called */
       XEvent event;
       XWindowEvent(dpy, w->d, ExposureMask, &event);

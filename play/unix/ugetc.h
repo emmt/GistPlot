@@ -18,7 +18,7 @@ PL_BEGIN_EXTERN_C
  *   replacements for getc and/or fgets in order to use gist
  * - in particular, _pl_u_getc can be the readline rl_getc_function
  * - _pl_u_waitfor and u_wait_stdin return 0 if input available
- * - such programs must also define u_abort_hook as appropriate
+ * - such programs must also define _pl_u_abort_hook as appropriate
  * - the code may call u_pending_events() to handle all pending
  *   events and expired alarms without blocking */
 PL_EXTERN int _pl_u_getc(FILE *stream);
