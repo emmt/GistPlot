@@ -1,157 +1,44 @@
-Welcome
--------
+# Gist2 Library
 
-Yorick is an interactive programming language for scientific computing
-that includes scientific visualization functions, and text and binary
-I/O functions geared to millions of numbers.
-
-Yorick is open source software, under a
-[BSD license](https://github.com/dhmunro/yorick/blob/master/LICENSE.md).
-Yorick runs under UNIX, MacOS X (X windows), and MS Windows.  You can
-find many yorick resources online:
-
-* Home pages at [yorick.github.com][] and [yorick.sourceforge.net][],
-  including the user manual and extensive documentation.
-* User forums at [yorick.sourceforge.net][].
-* Browse or download sourcecode at [github.com/dhmunro/yorick][].
-* Read end of Quick start section below on running yorick demo programs.
-
-[yorick.github.com]:         http://yorick.github.com
-[yorick.sourceforge.net]:    http://yorick.sourceforge.net
-[github.com/dhmunro/yorick]: http://github.com/dhmunro/yorick
-
-Files in the regexp/ subdirectory are the work of Guido van Rossum and
-Henry Spencer; read the files for details.  The latter is Copyright
-(c) 1986 by University of Toronto.
-
-Files in the fft directory are C translations of the Swarztrauber
-fortran FFTPACK routines.  Files in the matrix directory are C
-translations of the fortran LAPACK routines.  The original fortran is
-available from [netlib.org](http://netlib.org/).
+Gist2 is a library for scientific plotting based on the Gist part of
+[Yorick][yoric-url].  It is intended to be independent of Yorick and callable
+from any software.  As Yorick, Gist2 is licensed under the [BSD
+license][license-url].
 
 
-Quick start
------------
+## Installation
 
 On most UNIX-like systems (including Linux and MacOS X), you can build
-yorick by changing to the top level directory of the source
+Gist2 by changing to the top level directory of the source
 distribution and typing:
 
-    make install
+```sh
+make config
+make
+make install
+```
 
-This will create a subdirectory relocate/ in the source tree.  The
-yorick executable is relocate/bin/yorick.  You can move the relocate/
-directory wherever you want (the name "relocate" is unimportant), but
-any changes in the relative locations of the files therein will
-prevent yorick from starting correctly.  You can, of course, softlink
-to the yorick executable from wherever you like, or exec yorick from a
-shell script outside its relocate/ directory.  The relocate/ directory
-is organized as follows:
+To build Gist2 on a MS Windows machine, read [win/README](win/README).
 
-    relocate/  files required for building compiled packages, and:
-      bin/     binary executables
-      lib/     binary libraries for compiled packages
-      include/ header files for compiled package APIs
-      i0/      interpreted code required for yorick to start
-      i/       optional interpreted code libraries
-      i-start/ interpreted code that autoloads at startup
-      g/       graphics style files, palettes, and templates
-      doc/     documentation files
-
-To build a tarball containing a yorick executable, type instead:
-
-    make relocatable
-
-This creates a tarball yorick-V.N-RR.tgz containing the yorick code,
-interpreted library, and documentation.  Move it to the directory
-where you wish to install yorick, then unpack it with:
-
-    gzip -dc yorick-V.N-RR.tgz | tar xvf -
-
-The yorick executable will be yorick-V.N-RR/bin/yorick.  Read
-yorick-V.N-RR/README for more information.
-
-To build yorick on a MS Windows machine, read win/README.
-
-Yorick is a command line program; you need to run it in a terminal
-window.  You will want command line recall and editing.  If your
-terminal window does not support that, you can either run yorick under
-emacs (see the emacs/ directory in the source), or you can get a
-readline wrapper like [rlwrap](http://freshmeat.net/projects/rlwrap/).
-
-If you need some test programs to run, you can try the demos.  Start
-yorick and type:
-
-    include, "demo3.i"
-    demo3
-
-The demo3 runs a simulation of a chaotic pendulum (it will stop after
-about a minute).  Yorick functions generally have documentation which
-you can read in the terminal using the help command:
-
-    help, demo3
-
-The help message includes the path to the source file, which you can
-open and read with any text editor, to find out exactly how demo3
-works (or any other yorick interpreted command).  There are five demo
-programs (demo1 through demo5).  You can also do a comprehensive test
-of your yorick installation by typing:
-
-    include, "testfull.i"
-
-
-Roadmap of yorick source
-------------------------
+## Organization of code
 
 The top-level distribution directory contains this README, scripts for
 configuring and building yorick, and a number of subdirectories.  Some
 subdirectories contain core parts of yorick; others are extras which
 you might reasonably omit.  Here's a quick roadmap:
 
-    play/     (portability layer)
-      here are event loop, low level io, graphics primitives
-      everything else is supposed to be strictly architecture-independent
-        (however, other non-core packages may slightly violate this rule)
-    win/      (MS Windows specific files)
-      here are the MS Visual C++ project files
-      some Windows code is in subdirectories like play/win
-    gist/
-      play-based 2D scientific visualization library
-    yorick/
-      yorick language interpreter (C source)
-    matrix/
-      LAPACK linear algebra functions (C source)
-    math/
-      non-matrix mathematical functions (C source)
-    fft/
-      Swartztrauber Fast Fourier Transform (C source)
-    i/
-      library of interpreted functions
-    i0/
-      interpreted code required at startup
-    i-start/
-      interpreted code run at startup, usually containing autoloads
-    extend/
-      sample trivial compiled extension for yorick
-    mpy/
-      MPI-based yorick multiprocessing package
-    drat/
-      compiled extension to do 2D cylindrical radiation transport
-    hex/
-      compiled extension to do 3D radiation transport
-    doc/
-      documentation: yorick user manual, quick reference cards
-    emacs/
-      GNU Emacs lisp code for running yorick and editing yorick source
-
-    distribs/
-      files for creating RedHat RPM, FreeBSD, and other distributions
-    debian/
-      instructions for creating Debian .deb distribution
+- `play/` (portability layer) here are event loop, low level io, graphics
+  primitives everything else is supposed to be strictly
+  architecture-independent (however, other non-core packages may slightly
+  violate this rule);
+- `win/` (MS Windows specific files) here are the MS Visual C++ project files
+  some Windows code is in subdirectories like play/win;
+- `gist/` play-based 2D scientific visualization library `etc/` Gist palettes
+  and style files;
+- `doc/` documentation.
 
 
-Other build options
--------------------
+## Other build options
 
 You can take up to four steps to configure, build, test, and install
 yorick.  In order, the four separate commands are:
@@ -221,3 +108,9 @@ Other make targets include:
 
 There are many more build targets and make macros.  Read the comments
 in Makefile and Makepkg for more information.
+
+
+[license-url]: ./LICENSE.md
+[license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
+
+[yorick-url]: http://dhmunro.github.io/yorick-doc/
