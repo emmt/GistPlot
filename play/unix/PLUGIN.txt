@@ -6,7 +6,7 @@ Dynamic linking requires four platform/compiler dependent steps:
 
 (2) Linking the main program which calls pl_dlopen/pl_dlsym:
 
-    CCPLUG=$(CC) $(LDOPTIONS) $(LDFLAGS) $(PL_EXPORT)
+    CCPLUG=$(CC) $(LDOPTIONS) $(LDFLAGS) $(PLUG_EXPORT)
     $(CCPLUG) -o prog $(PROG_OBJS) $(PROG_LIBS) $(PLUG_LIB)
       PROG_OBJS are the .o files for the program
       PROG_LIBS are the -l libraries for the program
@@ -35,7 +35,7 @@ PLUG_UDL    -DPLUG_... define that selects branch of udl.c for this platform
 
 PLUG_LIB    -ldl or other system library containing functions called by
           udl.c, or blank if in libc or other default library
-PL_EXPORT compiler flag required to allow functions in the plugins to
+PLUG_EXPORT compiler flag required to allow functions in the plugins to
           call functions in the main program (yorick plugins always
           need to do this to get their arguments from the interpreter),
           corresponding to -export-dynamic libtool flag, often -Wl,-E
@@ -50,7 +50,7 @@ PLUG_SFX    native file suffix for plugins, .so for most UNIX platforms,
           but .sl for HPUX (possibly should use .so everywhere)
           (must match PLUG_SUFFIX in udl.c)
 
-The config,sh script recognizes several platforms by the uname -s
+The config.sh script recognizes several platforms by the uname -s
 command.  The following platforms are recognized and yorick should
 support plugins for at least some versions of the OS:
 
@@ -70,12 +70,12 @@ before running make config.
 
 There are deeper incompatibilities among the different platforms,
 which have only slight, if any, consequences for yorick plugins.  The
-most significant is that the AIX -bexpall switch in PL_EXPORT does not
+most significant is that the AIX -bexpall switch in PLUG_EXPORT does not
 export symbol names beginning with underscore "_".  Hence, no variable
 or function in the yorick main program whose name begins with _ will
 be visible to a plugin on AIX.  This is not a significant limitation.
 
-The PL_EXPORT flags for SunOS and IRIX are not obvious.  IRIX
+The PLUG_EXPORT flags for SunOS and IRIX are not obvious.  IRIX
 documentation suggests '-Wl,-hidden_symbol,*' may be necessary.  A
 significant worry is that libtool resorts to creating its own list of
 every extern symbol in the program for some platforms.  If this is

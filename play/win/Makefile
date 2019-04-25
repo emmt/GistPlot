@@ -71,7 +71,7 @@ pwin.o: playw.h ../std.h ../play2.h ../extern.h
 # this is the DL config test used in config.sh
 YORICK_EXE=./cfg
 YORICK_DEF=wdltest.def
-LDEXE_OPTS=$(LDOPTIONS) $(LDFLAGS) $(PL_EXPORT) -I.
+LDEXE_OPTS=$(LDOPTIONS) $(LDFLAGS) $(PLUG_EXPORT) -I.
 CCSO_OPTS=$(CPPFLAGS) $(CFLAGS) $(PLUG_PIC)
 LDSO_OPTS=$(LDOPTIONS) $(LDFLAGS) $(PLUG_SHARED)
 wdltest: wdlmain.c wdltest.c Makefile

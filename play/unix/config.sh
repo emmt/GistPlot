@@ -371,16 +371,16 @@ case "$os_name" in
               # no such thing as non-PIC so no PLUG_PIC flag
               # -bexpall fails for symbols beginning with _   <--WARNING
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT='-Wl,-bexpall,-brtl'
+    PLUG_EXPORT='-Wl,-bexpall,-brtl'
     PLUG_LIB=-ldl
     PLUG_PIC=
     PLUG_SHARED=-G
     PLUG_SFX=.so
   ;;
   IRIX*)       # SGI MIPS architecture
-               # PL_EXPORT with -Wl,-hidden_symbol ??
+               # PLUG_EXPORT with -Wl,-hidden_symbol ??
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=
+    PLUG_EXPORT=
     PLUG_LIB=
     PLUG_PIC=
     PLUG_SHARED=-shared
@@ -388,16 +388,16 @@ case "$os_name" in
   ;;
   SunOS)      # Sun SPARC architecture
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=
+    PLUG_EXPORT=
     PLUG_LIB=-ldl
     PLUG_PIC=-KPIC
     PLUG_SHARED="-KPIC -G"
     PLUG_SFX=.so
   ;;
   OSF1)       # DEC/Compaq/HP alpha architecture
-              # PL_EXPORT with -Wl,-non_hidden ??
+              # PLUG_EXPORT with -Wl,-non_hidden ??
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=
+    PLUG_EXPORT=
     PLUG_LIB=
     PLUG_PIC=
     PLUG_SHARED="-shared -Wl,-expect_unresolved,*"
@@ -405,7 +405,7 @@ case "$os_name" in
   ;;
   HP-UX)      # HP PA-RISC architecture
     PLUG_UDL=-DPLUG_HPUX
-    PL_EXPORT=-Wl,-E
+    PLUG_EXPORT=-Wl,-E
     PLUG_LIB=-ldld
     PLUG_PIC=+Z
     PLUG_SHARED=-n
@@ -415,7 +415,7 @@ case "$os_name" in
     # for Mac OS X 10.3 and earlier, use -DPLUG_MACOSX
     # see https://developer.apple.com/library/mac/#qa/qa1180/_index.html
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=
+    PLUG_EXPORT=
     PLUG_LIB=
     PLUG_PIC=
     PLUG_SHARED="-bundle -bundle_loader ./cfg"
@@ -423,7 +423,7 @@ case "$os_name" in
   ;;
   CYGWIN*)    # CygWin i86 UNIX environment for MS Windows
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=
+    PLUG_EXPORT=
     PLUG_LIB=
     PLUG_PIC=-DPLUG_IN
     PLUG_SHARED=-shared
@@ -433,7 +433,7 @@ case "$os_name" in
   *)          # Linux, Free/Net/OpenBSD i86 architecture
               # these are generic GNU/gcc values, also work for Intel/icc
     PLUG_UDL=-DPLUG_LIBDL
-    PL_EXPORT=-Wl,-E
+    PLUG_EXPORT=-Wl,-E
     PLUG_LIB=-ldl
     PLUG_PIC=-fPIC
     PLUG_SHARED="-fPIC -shared"
@@ -458,7 +458,7 @@ LD_PLUGIN="$CC $CFLAGS $LDFLAGS $PLUG_SHARED"
 
 # find functions to do dynamic linking for plugins
 # first check that TEST_PLUG branch of config.c/udltest.c compiles and loads
-#   this checks PLUG_UDL, PL_EXPORT, and PLUG_LIB settings
+#   this checks PLUG_UDL, PLUG_EXPORT, and PLUG_LIB settings
 dl_works=no
 if test -z "$NO_PLUGINS"; then
 args="$CFLAGS $PLUG_EXPORT $PLUG_UDL -I. -I.. -I../.. $LDFLAGS -o cfg config.c"
@@ -493,7 +493,7 @@ ALT_LIBS=
 IF_TGT='$(IF_DLL)'
 if test $dl_works = no; then
   PLUG_UDL=-DPLUG_UNSUPPORTED
-  PL_EXPORT=
+  PLUG_EXPORT=
   PLUG_LIB=
   PLUG_PIC=
   PLUG_SHARED=
@@ -504,7 +504,7 @@ if test $dl_works = no; then
 else
   case "$os_name" in
     AIX)
-      PL_EXPORT='-Wl,-bE:$(GIST_LIBEXE)/exports.def,-brtl'
+      PLUG_EXPORT='-Wl,-bE:$(GIST_LIBEXE)/exports.def,-brtl'
     ;;
     OSF1)
       # fix quoting to account for difference between make and sh variable
@@ -529,7 +529,7 @@ echo "ALT_LIBS=$ALT_LIBS" >>../../Make.cfg
 echo "IF_TGT=$IF_TGT" >>../../Make.cfg
 
 echo "PLUG_UDL=$PLUG_UDL" >>../../Make.cfg
-echo "PL_EXPORT=$PL_EXPORT" >>../../Make.cfg
+echo "PLUG_EXPORT=$PLUG_EXPORT" >>../../Make.cfg
 echo "PLUG_LIB=$PLUG_LIB" >>../../Make.cfg
 echo "PLUG_PIC=$PLUG_PIC" >>../../Make.cfg
 echo "PLUG_SHARED=$PLUG_SHARED" >>../../Make.cfg

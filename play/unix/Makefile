@@ -61,7 +61,7 @@ usock.o: config.h ../std.h ../play2.h playu.h usock.c
 
 # this is the DL config test used in config.sh
 YORICK_EXE=./cfg
-LDEXE_OPTS=$(LDOPTIONS) $(LDFLAGS) -DTEST_PLUG $(PL_EXPORT) $(PLUG_UDL) -I.
+LDEXE_OPTS=$(LDOPTIONS) $(LDFLAGS) -DTEST_PLUG $(PLUG_EXPORT) $(PLUG_UDL) -I.
 CCSO_OPTS=$(CPPFLAGS) $(CFLAGS) $(PLUG_PIC)
 LDSO_OPTS=$(LDOPTIONS) $(LDFLAGS) $(PLUG_SHARED)
 udltest: config.c udltest.c Makefile
