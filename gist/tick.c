@@ -1,8 +1,11 @@
 /*
- * $Id: tick.c,v 1.2 2010-04-01 03:36:20 dhmunro Exp $
+ * tick.c -
+ *
  * Implement ticks and labels for GIST coordinate systems
- */
-/* Copyright (c) 2005, The Regents of the University of California.
+ *
+ *------------------------------------------------------------------------------
+ *
+ * Copyright (c) 2005, The Regents of the University of California.
  * All rights reserved.
  * This file is part of yorick (http://yorick.sourceforge.net).
  * Read the accompanying LICENSE file for details.
@@ -752,7 +755,7 @@ static void DrawOrigin(gp_real_t x0, gp_real_t x1, gp_real_t y0, gp_real_t y1,
 /* ------------------------------------------------------------------------ */
 
 static char overflow[32];
-static char fixedFormat[16];   /* e.g.- " %+05.0f" */
+static char fixedFormat[20];   /* e.g.- " %+05.0f" */
 static int decimalPoint;
 static int niceDecades;
 static char *niceDecs[]=
