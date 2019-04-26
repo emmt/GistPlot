@@ -88,31 +88,30 @@ _pl_u_waiter(int wait)
 
   if (pl_signalling != PL_SIG_NONE) {
     /* first priority is to catch any pending signals */
-    int i = pl_signalling;
+    int sig = pl_signalling;
     pl_signalling = PL_SIG_NONE;
-    if (!fault_loop && _pl_u_exception) {
-      fault_loop = 1;    /* don't trust _pl_u_exception not to fault */
-      _pl_u_exception(i, _pl_u_errmsg);
+    if (!fault_loop && _pl_u_exception != NULL) {
+      fault_loop = 1;    /* don't trust _pl_u_exception() not to fault */
+      _pl_u_exception(sig, _pl_u_errmsg);
       serviced_event = 1;
       fault_loop = 0;
     }
-    _pl_u_errmsg = 0;
-
+    _pl_u_errmsg = NULL;
   } else {
     bool have_timeout = false;
     serviced_event = _pl_u_poll(0);   /* anything pending? */
-    if (!serviced_event) {        /* if not, wait for input */
+    if (serviced_event == 0) {        /* if not, wait for input */
       int timeout;
       double wait_secs = pl_timeout();
       have_timeout = (wait_secs > 0.0);
-      if (wait && wait_secs) {
+      if (wait && wait_secs != 0.0) {
         do { /* int timeout may not handle > 32.767 s at once */
           if (wait_secs < 0.0)          timeout = -1;
           else if (wait_secs < 32.767)  timeout = (int)(1000.*wait_secs);
           else                          timeout = 32767;
           serviced_event = _pl_u_poll(timeout);
           if (pl_signalling != PL_SIG_NONE) return 0;
-          if (serviced_event) break;
+          if (serviced_event != 0) break;
           wait_secs -= 32.767;
         } while (wait_secs > 0.0);
       }
