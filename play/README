@@ -23,7 +23,7 @@ all pathnames to UNIX /-delimited form (on non-UNIX systems).  (2) The
 play fread and fwrite functions provide access to the raw unbuffered
 I/O of the OS (where it exists) for binary files.  (3) The play
 interface provides directory listing functions (inexplicably missing
-from the ANSI standard).  Less crucial than "play/io.h" and "play/std.h"
+from the ANSI standard).  Less crucial than "play/io.h" are "play/std.h"
 (a memory management interface) and "play/hash.h" (a hash table
 interface).  These functions are necessary to any play implementation,
 and are exposed to a play-based program as a convenience.
@@ -243,7 +243,7 @@ extern int pl_dclose(pl_dir_t *dir);
 play2.h interface
 ----------------
 
-extern int on_launch(int argc, char *argv[]);
+extern int pl_on_launch(int argc, char *argv[]);
   this must be supplied by the application; it is called in lieu of main
   non-0 return means to abort without entering main event loop
   0 return enters main event loop
@@ -274,14 +274,14 @@ extern void pl_gui_query(void (**on_expose)(void *c, int *xy),
                         void (**on_motion)(void *c,int md,int x,int y),
                         void (**on_deselect)(void *c),
                         void (**on_panic)(pl_scr_t *screen));
-  the on_launch function should call at least some of these
+  the pl_on_launch function should call at least some of these
   routines to set the callback procedures for all the events which
   might drive the remainder of program execution
-  if on_launch returns non-0, the program enters an event loop, and
+  if pl_on_launch returns non-0, the program enters an event loop, and
   calls the specified function whenever such an event arrives, or
   ignores it if no callback was set
   each of these setup routines may be called only once, and should
-  be called from on_launch (or maybe the first call to on_idle?)
+  be called from pl_on_launch (or maybe the first call to on_idle?)
 
   The pl_gui function installs callbacks to handle events from the
   graphical interface.  The pl_gui_query function gives the addresses

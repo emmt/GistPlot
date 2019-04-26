@@ -16,7 +16,7 @@
 PL_BEGIN_EXTERN_C
 
 /* application entry point */
-extern int on_launch(int argc, char *argv[]);
+extern int pl_on_launch(int argc, char *argv[]);
 
 /* main event loop control and system services */
 PL_EXTERN void pl_quit(void);

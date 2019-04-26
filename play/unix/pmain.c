@@ -11,6 +11,7 @@
 #include "play2.h"
 
 PL_BEGIN_EXTERN_C
+extern int pl_on_launch(int argc, char *argv[]);
 extern void pl_mminit(void);
 extern int _pl_u_main_loop(int (*on_launch)(int,char**), int, char **);
 PL_END_EXTERN_C
@@ -19,5 +20,5 @@ int
 main(int argc, char *argv[])
 {
   pl_mminit();
-  return _pl_u_main_loop(on_launch, argc, argv);
+  return _pl_u_main_loop(pl_on_launch, argc, argv);
 }

@@ -94,7 +94,7 @@ static int nOut, noDisplay, x_only;
 static char *inName;
 
 int
-on_launch(int argc, char *argv[])
+pl_on_launch(int argc, char *argv[])
 {
   int i, j;
   char *arg;

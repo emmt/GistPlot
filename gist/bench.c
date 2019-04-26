@@ -1100,7 +1100,7 @@ on_idle(void)
 static char *default_path = "~/gist:~/Gist:../g";
 
 int
-on_launch(int argc, char *argv[])
+pl_on_launch(int argc, char *argv[])
 {
   int i, j;
   int usePS= (argc>1 && argv[1][0]!='0');
