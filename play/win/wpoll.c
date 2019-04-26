@@ -138,7 +138,7 @@ int
 _pl_w_add_input(HANDLE wait_obj, void (*on_input)(void *), void *context)
 {
   int i;
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
   for (i=0 ; i<w_nputs ; i++) if (w_inputs[i]==wait_obj) break;
   if (on_input) {
     if (i==w_nputs) {
@@ -191,7 +191,7 @@ _pl_w_app_msg(MSG *msg)
     int result = _pl_w_msg_hook(msg);
     if (result) return result;
   }
-  if (pl_signalling) _pl_w_caught();
+  if (pl_signalling != PL_SIG_NONE) _pl_w_caught();
   /* handle pl_qclear if we are in worker thread */
   if (w_qclearing) {
     int got_quit = 0;

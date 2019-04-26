@@ -109,7 +109,7 @@ x_prepoll(void *wsdata)
   }
   XFlush(dpy);
   xdpy->motion_q = 0;  /* noop unless XSync has cleared off pending events */
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
   return 0;
 }
 
@@ -458,7 +458,7 @@ pl_scopy(pl_win_t *w, char *string, int n)
       xdpy->sel_owner = 0;
       return 1;
     }
-    if (pl_signalling) pl_abort();
+    if (pl_signalling != PL_SIG_NONE) pl_abort();
   }
 
   if (!clearing)
@@ -508,7 +508,7 @@ pl_spaste(pl_win_t *w)
     if (prop) XFree((char *)prop);
   }
 
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 
   return xdpy->sel_string;
 }

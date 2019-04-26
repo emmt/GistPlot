@@ -26,5 +26,5 @@ pl_rect(pl_win_t *w, int x0, int y0, int x1, int y1, int border)
     XDrawRectangle(dpy, w->d, gc, x0, y0, x1, y1);
   else
     XFillRectangle(dpy, w->d, gc, x0, y0, x1, y1);
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }

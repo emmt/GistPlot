@@ -34,7 +34,7 @@ pl_palette(pl_win_t *w, unsigned long *colors, int n)
   if (w->menu) shallow = change_pal = 0;
   else if (w->rgb_mode && change_pal) shallow = 2, change_pal = 0;
 
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     for (i=0 ; i<n ; i++) {
       r = PL_R(colors[i]);
       g = PL_G(colors[i]);

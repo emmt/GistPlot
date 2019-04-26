@@ -45,7 +45,7 @@ void (*_pl_w_abort_hook)(void) = 0;
 void
 pl_abort(void)
 {
-  if (!pl_signalling) pl_signalling = PL_SIG_SOFT;
+  if (pl_signalling == PL_SIG_NONE) pl_signalling = PL_SIG_SOFT;
   if (_pl_w_abort_hook) _pl_w_abort_hook();
   /* Microsoft documentation warns that msvcrt.dll
    * may not be POSIX compliant for using longjmp out of an

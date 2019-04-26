@@ -67,7 +67,7 @@ pl_rgb_read(pl_win_t *w, unsigned char *rgbs, int x0, int y0, int x1, int y1)
   }
 
   _pl_x_imzap(s);
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 static int

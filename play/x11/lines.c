@@ -25,7 +25,7 @@ pl_dots(pl_win_t *w)
     XDrawPoints(dpy, w->d, gc, _pl_x_pt_list, nmx, CoordModeOrigin);
     n -= nmx;
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 void
@@ -42,7 +42,7 @@ pl_lines(pl_win_t *w)
     XDrawLines(dpy, w->d, gc, _pl_x_pt_list, nmx, CoordModeOrigin);
     n -= nmx;
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 void
@@ -60,7 +60,7 @@ pl_segments(pl_win_t *w)
     XDrawSegments(dpy, w->d, gc, (XSegment *)_pl_x_pt_list, nmx);
     n -= nmx;
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 static char dashed[] = { 5, 5 };

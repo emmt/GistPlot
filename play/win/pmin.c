@@ -17,14 +17,16 @@ static void (*_pl_w_abort_hook)(void) = 0;
 static void (*w_exception)(int signal, char *errmsg) = 0;
 static int w_checksig(void);
 
-volatile int pl_signalling = 0;
+volatile int pl_signalling = PL_SIG_NONE;
 
 static int w_hook_recurse = 0;
 
 void
 pl_abort(void)
 {
-  if (!pl_signalling) pl_signalling = PL_SIG_SOFT;
+  if (pl_signalling == PL_SIG_NONE) {
+    pl_signalling = PL_SIG_SOFT;
+  }
   w_hook_recurse = 0;
   _pl_w_abort_hook();   /* blow up if _pl_w_abort_hook == 0 */
 }
@@ -86,7 +88,7 @@ w_checksig(void)
 {
   int sig = pl_signalling;
   if (sig) {
-    pl_signalling = 0;
+    pl_signalling = PL_SIG_NONE;
     if (w_exception) w_exception(sig, (char *)0);
   }
   return sig;

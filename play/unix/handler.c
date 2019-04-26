@@ -85,7 +85,7 @@ _pl_u_sigfpe(int sig)
 static void
 u_sigint(int sig)
 {
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     /* not all systems have ualarm function for microsecond resolution */
     extern unsigned int alarm(unsigned int);       /* POSIX <unistd.h> */
     pl_signalling = PL_SIG_INT;
@@ -98,7 +98,9 @@ static void
 u_sigalrm(int sig)
 {
   signal(sig, &u_sigalrm);
-  if (pl_signalling==PL_SIG_INT) pl_abort();
+  if (pl_signalling == PL_SIG_INT) {
+    pl_abort();
+  }
 }
 
 #ifdef NO_XLIB

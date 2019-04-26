@@ -221,7 +221,7 @@ x_image(pl_win_t *w, unsigned char *bytes, int rgb, int ncols,
     XPutImage(dpy, w->d, gc, im, 0,0, x0, y0, width, height);
     _pl_x_imzap(s);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 static int

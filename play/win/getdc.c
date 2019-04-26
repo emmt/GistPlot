@@ -103,7 +103,7 @@ pl_txheight(pl_scr_t *s, int font, int pixsize, int *baseline)
 {
   int height = pixsize;
   int base = pixsize;
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     HFONT orig = 0;
     HDC dc;
     TEXTMETRIC tm;
@@ -130,7 +130,7 @@ int
 pl_txwidth(pl_scr_t *s, const char *text, int n, int font, int pixsize)
 {
   int width = pixsize;
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     HFONT orig = 0;
     HDC dc;
     SIZE sz;
@@ -155,7 +155,7 @@ pl_txwidth(pl_scr_t *s, const char *text, int n, int font, int pixsize)
 void
 pl_pen(pl_win_t *w, int width, int type)
 {
-  if (pl_signalling) {
+  if (pl_signalling != PL_SIG_NONE) {
     pl_abort();
   } else {
     if (width<1) width = 1;
@@ -171,7 +171,7 @@ pl_pen(pl_win_t *w, int width, int type)
 void
 pl_color(pl_win_t *w, unsigned long color)
 {
-  if (pl_signalling) pl_abort(), color = w->color;
+  if (pl_signalling != PL_SIG_NONE) pl_abort(), color = w->color;
   if (w->color != color) {
     int de_xor = (w->color == PL_XOR);
     w->color = color;
@@ -213,7 +213,7 @@ HDC
 _pl_w_getdc(pl_win_t *w, int flags)
 {
   HDC dc = w->dc;
-  if (pl_signalling) pl_abort(), dc = 0;
+  if (pl_signalling != PL_SIG_NONE) pl_abort(), dc = 0;
   if (dc) {
     if (flags) {
       COLORREF color = (flags&7)? _pl_w_color(w, w->color) : 0;

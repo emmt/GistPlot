@@ -162,7 +162,7 @@ pl_palette(pl_win_t *w, pl_col_t *colors, int n)
       w->n_palette = n;
     }
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 int
@@ -373,7 +373,7 @@ _pl_x_nuke_shared(pl_scr_t *s)
     pl_free(usepxl);
     pl_free(shared);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 /* ARGSUSED */

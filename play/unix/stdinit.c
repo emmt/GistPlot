@@ -35,7 +35,7 @@ pl_stdinit(void (*on_stdin)(char *input_line))
 void
 pl_stdout(char *output_line)
 {
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     fputs(output_line, stdout);
     fflush(stdout);
   }
@@ -44,7 +44,7 @@ pl_stdout(char *output_line)
 void
 pl_stderr(char *output_line)
 {
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     fputs(output_line, stderr);
     fflush(stderr);
   }

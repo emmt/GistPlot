@@ -21,7 +21,7 @@ static int x11_nerrs = 0;
 int
 _pl_x_err_handler(Display *dpy, XErrorEvent *event)
 {
-  if (!pl_signalling) {
+  if (pl_signalling == PL_SIG_NONE) {
     strcpy(x11_errmsg, "Xlib: ");
     XGetErrorText(dpy, event->error_code, x11_errmsg+6, 83);
     x11_errmsg[89] = '\0';

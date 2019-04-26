@@ -38,5 +38,5 @@ _pl_x_clip(Display *dpy, GC gc, int x0, int y0, int x1, int y1)
   } else {
     XSetClipMask(dpy, gc, None);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }

@@ -321,7 +321,7 @@ static unsigned int app_ncalls = 0;
 static int panic_count = 0;
 
 int
-on_launch(int argc, char *argv[])
+pl_on_launch(int argc, char *argv[])
 {
   app_argc = argc;
   app_argv = argv;

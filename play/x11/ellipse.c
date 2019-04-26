@@ -26,5 +26,5 @@ pl_ellipse(pl_win_t *w, int x0, int y0, int x1, int y1, int border)
     XDrawArc(dpy, w->d, gc, x0, y0, x1, y1, 0, 360*64);
   else
     XFillArc(dpy, w->d, gc, x0-1, y0-1, x1+2, y1+2, 0, 360*64);
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }

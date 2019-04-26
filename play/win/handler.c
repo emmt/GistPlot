@@ -40,7 +40,7 @@ static HANDLE sigint_abort = 0;
 static DWORD WINAPI sigint_main(LPVOID lp);
 static void w_interrupt(void);
 
-volatile int pl_signalling = 0;
+volatile int pl_signalling = PL_SIG_NONE;
 
 void
 pl_handler(void (*on_exception)(int signal, char *errmsg))
@@ -59,7 +59,7 @@ _pl_w_caught(void)
 {
   MSG msg;
   int sig = pl_signalling;
-  pl_signalling = 0;
+  pl_signalling = PL_SIG_NONE;
   if (sigint_active) PulseEvent(sigint_abort);
   w_on_exception(sig, (char *)0);  /* blows up if no handler */
   /* clear any pending exception warning messages off worker queue */
@@ -72,7 +72,7 @@ _pl_w_caught(void)
 static void
 w_handle_exception(MSG *msg)
 {
-  if (pl_signalling) _pl_w_caught();
+  if (pl_signalling != PL_SIG_NONE) _pl_w_caught();
 }
 
 void
@@ -88,7 +88,7 @@ int
 _pl_w_sigint(int delay)
 {
   if (!w_on_exception) return 0;
-  if (delay && !pl_signalling && !sigint_active) {
+  if (delay && pl_signalling == PL_SIG_NONE && !sigint_active) {
     /* interrupt worker thread after W_SIGINT_DELAY */
     HANDLE h;
     UINT id;
@@ -110,9 +110,10 @@ static DWORD WINAPI
 sigint_main(LPVOID lp)
 {
   PostThreadMessage(_pl_w_id_worker, wm_exception, 0, 0);
-  if (WaitForSingleObject(sigint_abort, W_SIGINT_DELAY)==WAIT_TIMEOUT &&
-      pl_signalling==PL_SIG_INT)
+  if (WaitForSingleObject(sigint_abort, W_SIGINT_DELAY) == WAIT_TIMEOUT
+      && pl_signalling == PL_SIG_INT) {
     w_interrupt();
+  }
   sigint_active = 0;
   return 0;
 }

@@ -132,7 +132,7 @@ _pl_x_font(pl_x_display_t *xdpy, int font, int pixsize)
     xdpy->most_recent = j;
   }
 
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 
   return f;
 }

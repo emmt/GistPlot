@@ -84,7 +84,7 @@ _pl_w_deliver(char *buf)
 static void
 w_formout(char *line, void (*func)(char *, long))
 {
-  if (!pl_signalling && line) {
+  if (pl_signalling == PL_SIG_NONE && line) {
     static char *buf = 0;
     HANDLE heap = GetProcessHeap();
     long len = 256, j = 0, i = 0;

@@ -104,7 +104,7 @@ x_create(pl_scr_t *s, Window parent, int hints, void *ctx,
   w->height = height;
   w->xyclip[0] = w->xyclip[1] = w->xyclip[2] = w->xyclip[3] = 0;
 
-  if (pl_signalling) goto fail2;
+  if (pl_signalling != PL_SIG_NONE) goto fail2;
   s->nwins++;
   return w;
 
@@ -113,7 +113,7 @@ x_create(pl_scr_t *s, Window parent, int hints, void *ctx,
   fail1: XDestroyWindow(dpy, w->d);
   fail0: pl_free(w);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
   return 0;
 }
 
@@ -144,7 +144,7 @@ pl_win_t *pl_subwindow(pl_scr_t *s, int width, int height,
     Display *dpy = s->xdpy->dpy;
     if (hints&PL_RGBMODEL) _pl_x_rgb_palette(w);
     XMapWindow(dpy, w->d);
-    if (pl_signalling) pl_abort();
+    if (pl_signalling != PL_SIG_NONE) pl_abort();
   }
   return w;
 }
@@ -246,7 +246,7 @@ pl_window(pl_scr_t *s, int width, int height, char *title,
       XSelectInput(dpy, w->d, 0L);
       XSync(dpy, True);
     }
-    if (pl_signalling) pl_abort();
+    if (pl_signalling != PL_SIG_NONE) pl_abort();
   }
 
   return w;
@@ -272,7 +272,7 @@ pl_menu(pl_scr_t *s, int width, int height, int x, int y,
       pl_destroy(w);
       w = 0;
     }
-    if (pl_signalling) {
+    if (pl_signalling != PL_SIG_NONE) {
       pl_destroy(w);
       w = 0;
       pl_abort();
@@ -303,7 +303,7 @@ pl_bitblt(pl_win_t *w, int x, int y, pl_win_t *offscreen,
     GC gc = _pl_x_getgc(s, w, FillSolid);
     XCopyArea(s->xdpy->dpy, offscreen->d, w->d, gc,
               x0, y0, x1-x0, y1-y0, x, y);
-    if (pl_signalling) pl_abort();
+    if (pl_signalling != PL_SIG_NONE) pl_abort();
   }
 }
 
@@ -364,7 +364,7 @@ void
 pl_resize(pl_win_t *w, int width, int height)
 {
   if (!w->parent) XResizeWindow(w->s->xdpy->dpy, w->d, width, height);
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 void
@@ -375,7 +375,7 @@ pl_raise(pl_win_t *w)
     Window xwin = w->d;
     XMapWindow(dpy, xwin);   /* user may have iconified it */
     XRaiseWindow(dpy, xwin);
-    if (pl_signalling) pl_abort();
+    if (pl_signalling != PL_SIG_NONE) pl_abort();
   }
 }
 
@@ -390,12 +390,12 @@ pl_clear(pl_win_t *w)
     pl_color(w, PL_BG);
     XFillRectangle(dpy, w->d, gc, 0,0, w->width+1, w->height+1);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 void
 pl_flush(pl_win_t *w)
 {
   XFlush(w->s->xdpy->dpy);
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }

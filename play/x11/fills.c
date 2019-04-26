@@ -32,5 +32,5 @@ pl_fill(pl_win_t *w, int convexity)
                  x_shape[convexity], CoordModeOrigin);
     n -= nmx;
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }

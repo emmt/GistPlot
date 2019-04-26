@@ -280,7 +280,8 @@ void
 pl_clear(pl_win_t *w)
 {
   RECT r;
-  if (!pl_signalling && GetClientRect(w->w? w->w : w->parent->w, &r)) {
+  if (pl_signalling == PL_SIG_NONE &&
+      GetClientRect(w->w? w->w : w->parent->w, &r)) {
     if (w->dc) {
       HBRUSH b = CreateSolidBrush(_pl_w_color(w, w->bg));
       if (b) {
@@ -606,7 +607,7 @@ pl_scopy(pl_win_t *w, char *string, int n)
 {
   int result = 1;
   HWND owner = (string && (n>0))? w->w : 0;
-  if (!pl_signalling && OpenClipboard(owner)) {
+  if (pl_signalling == PL_SIG_NONE && OpenClipboard(owner)) {
     if (EmptyClipboard()) {
       int i;
       char *tedious = clip_text;
@@ -631,7 +632,7 @@ pl_scopy(pl_win_t *w, char *string, int n)
 char *
 pl_spaste(pl_win_t *w)
 {
-  if (pl_signalling) return 0;
+  if (pl_signalling != PL_SIG_NONE) return NULL;
   if (!clip_owner && OpenClipboard(w->w)) {
     char *tedious = GetClipboardData(CF_TEXT);
     char *string = tedious? GlobalLock(tedious) : 0;

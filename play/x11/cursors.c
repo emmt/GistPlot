@@ -41,7 +41,7 @@ pl_cursor(pl_win_t *w, int cursor)
   pl_scr_t *s = w->s;
   Display *dpy = s->xdpy->dpy;
   if (dpy) XDefineCursor(dpy, w->d, _pl_x_cursor(s, cursor));
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
 
 Cursor
@@ -81,7 +81,7 @@ _pl_x_cursor(pl_scr_t *s, int cursor)
       } else {
         xdpy->cursors[cursor]= XCreateFontCursor(dpy, cursor_shape[cursor]);
       }
-      if (pl_signalling) pl_abort();
+      if (pl_signalling != PL_SIG_NONE) pl_abort();
     }
     return xdpy->cursors[cursor];
   } else {

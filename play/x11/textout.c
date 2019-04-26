@@ -155,5 +155,5 @@ pl_text(pl_win_t *w, int x0, int y0, const char *text, int n)
 
     _pl_x_rotzap(s);
   }
-  if (pl_signalling) pl_abort();
+  if (pl_signalling != PL_SIG_NONE) pl_abort();
 }
