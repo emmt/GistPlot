@@ -583,6 +583,7 @@ PL_EXTERN long gp_cont_trace(long *n, gp_real_t *px, gp_real_t *py);
    command by repairing any damage or making any additions to the
    window containing the drawing.  On metafile engines, GdUpdate is
    a noop.
+
    A drawing consists of a list of coordinate systems (a GKS normalization
    transformation plus GIST ticks and labels and a list of elements to be
    displayed), plus a list of graphical elements outside any coordinate
@@ -616,13 +617,13 @@ PL_EXTERN int gd_clear(gd_drawing_t *drawing);
    The gd_drawing_t* is also recorded on each engine.  */
 PL_EXTERN int gd_draw(int changesOnly);
 
-/* Graphical elements are added to the current drawing by setting
-   attributes in ga_attributes, then calling gd_add_lines, gd_add_disjoint, gd_add_cells, gd_add_mesh,
-   gd_add_fillmesh, gd_add_vectors, or gd_add_contours.  gd_add_text puts the text outside
-   all coordinate systems unless toSys is non-0.  Each of these routines
-   returns a unique identification number (equal to the total number
-   of objects defined in the current drawing since the last gd_clear).
-   They return -1 if an error occurs.  */
+/* Graphical elements are added to the current drawing by setting attributes in
+   ga_attributes, then calling gd_add_lines, gd_add_disjoint, gd_add_cells,
+   gd_add_mesh, gd_add_fillmesh, gd_add_vectors, or gd_add_contours.
+   gd_add_text puts the text outside all coordinate systems unless toSys is
+   non-0.  Each of these routines returns a unique identification number (equal
+   to the total number of objects defined in the current drawing since the last
+   gd_clear).  They return -1 if an error occurs.  */
 
 PL_EXTERN int gd_add_lines(long n, const gp_real_t *px, const gp_real_t *py);
 PL_EXTERN int gd_add_disjoint(long n, const gp_real_t *px, const gp_real_t *py,

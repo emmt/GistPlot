@@ -228,7 +228,7 @@ PL_END_EXTERN_C
 
 /*------------------------------------------------------------------------*/
 
-/* on_exception arguments */
+/* on_exception arguments and pl_signalling values */
 #define PL_SIG_NONE  0
 #define PL_SIG_SOFT  1
 #define PL_SIG_INT   2
