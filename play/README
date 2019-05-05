@@ -255,25 +255,25 @@ extern void pl_stdinit(void (*on_stdin)(char *input_line));
 extern void pl_quitter(int (*on_quit)(void));
 extern void pl_handler(void (*on_exception)(int signal, char *errmsg));
 extern void pl_gui(void (*on_expose)(void *c, int *xy),
-                  void (*on_destroy)(void *c),
-                  void (*on_resize)(void *c,int w,int h),
-                  void (*on_focus)(void *c,int in),
-                  void (*on_key)(void *c,int k,int md),
-                  void (*on_click)(void *c,int b,int md,int x,int y,
-                                   unsigned long ms),
-                  void (*on_motion)(void *c,int md,int x,int y),
-                  void (*on_deselect)(void *c),
-                  void (*on_panic)(pl_scr_t *screen));
+                   void (*on_destroy)(void *c),
+                   void (*on_resize)(void *c,int w,int h),
+                   void (*on_focus)(void *c,int in),
+                   void (*on_key)(void *c,int k,int md),
+                   void (*on_click)(void *c,int b,int md,int x,int y,
+                                    unsigned long ms),
+                   void (*on_motion)(void *c,int md,int x,int y),
+                   void (*on_deselect)(void *c),
+                   void (*on_panic)(pl_scr_t *screen));
 extern void pl_gui_query(void (**on_expose)(void *c, int *xy),
-                        void (**on_destroy)(void *c),
-                        void (**on_resize)(void *c,int w,int h),
-                        void (**on_focus)(void *c,int in),
-                        void (**on_key)(void *c,int k,int md),
-                        void (**on_click)(void *c,int b,int md,int x,int y,
-                                          unsigned long ms),
-                        void (**on_motion)(void *c,int md,int x,int y),
-                        void (**on_deselect)(void *c),
-                        void (**on_panic)(pl_scr_t *screen));
+                         void (**on_destroy)(void *c),
+                         void (**on_resize)(void *c,int w,int h),
+                         void (**on_focus)(void *c,int in),
+                         void (**on_key)(void *c,int k,int md),
+                         void (**on_click)(void *c,int b,int md,int x,int y,
+                                           unsigned long ms),
+                         void (**on_motion)(void *c,int md,int x,int y),
+                         void (**on_deselect)(void *c),
+                         void (**on_panic)(pl_scr_t *screen));
   the pl_on_launch function should call at least some of these
   routines to set the callback procedures for all the events which
   might drive the remainder of program execution
@@ -290,7 +290,7 @@ extern void pl_gui_query(void (**on_expose)(void *c, int *xy),
   no such callback(s).
 
 extern void pl_set_alarm(double secs, void (*on_alarm)(void *context),
-                        void *context);
+                         void *context);
   the set_alarm function cal be called many times to schedule callbacks
   the secs argument is the number of wall seconds (see pl_wall_secs) from
   now, and the context will be passed to the on_alarm function when it
@@ -323,6 +323,7 @@ int on_quit(void)
 void on_exception(int signal, char *errmsg)
   an exception has been raised; the previous callback may have been
   asynchronously interrupted - signal will be one of the following:
+#define PL_SIG_NONE  0     no pending signal
 #define PL_SIG_SOFT  1     pl_abort() was called
 #define PL_SIG_INT   2     SIGINT C-c or other user-generated interrupt
 #define PL_SIG_FPE   3     SIGFPE floating point exception
@@ -336,7 +337,8 @@ void on_exception(int signal, char *errmsg)
 extern void pl_abort(void);
   do not return to caller -- next "event" will be on_exception
   normal event processing continues after on_exception returns
-  call pl_abort() quickly if you check pl_signalling and find it non-0
+  call pl_abort() quickly if you check pl_signalling and find it
+  not equal to PL_SIG_NONE
 extern volatile int pl_signalling;
   semaphore used to signal that pl_abort() should be called as soon as
   possible -- if pl_signalling is not set, you may set it to indicate
@@ -449,12 +451,12 @@ extern char *pl_getuser(void);
 
 typedef struct _pl_scr pl_scr_t;      a screen (+ keyboard and mouse)
 typedef struct _pl_win pl_win_t;      a window, menu, pixmap, or metafile
-typedef unsigned long pl_col_t;   a color
+typedef unsigned long pl_col_t;       a color
   note that pl_scr_t and pl_win_t are opaque
 
 extern pl_scr_t *pl_connect(char *server_name);
   connect to server_name (e.g.- an X DISPLAY),
-  or to the default screen if server_name==0
+  or to the default screen if server_name==NULL
 extern void pl_disconnect(pl_scr_t *screen);
   disconnect from the screen (destroy any windows there first)
 extern pl_scr_t *pl_multihead(pl_scr_t *other_screen, int number);
