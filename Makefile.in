@@ -26,6 +26,10 @@ INCDIR=$(PREFIX)/include
 LIBDIR=$(PREFIX)/lib
 DOCDIR=$(PREFIX)/share/doc
 
+# Directory and serach path for Gist style files and palettes.
+GIST_SITE=$(PREFIX)/share/gist
+D_GISTPATH='-DGISTPATH="~/gist:~/Gist:$(GIST_SITE)"'
+
 # Compiled file with main() function.
 main.o = obj/play/$(PLAY_MAIN_O)
 
@@ -37,6 +41,72 @@ clean: Makefile
 distclean: clean
 	rm -f cfg* config.h Make.cfg play/win.h numfmt.h
 	rmdir obj/* pic/* obj pic
+
+install: libplay2.a libplay2$(PLUG_SFX) libgist2.a libgist2$(PLUG_SFX) gist
+	dir="$(DESTDIR)$(INCDIR)"; \
+	mkdir -p "$$dir" "$$dir/play" "$$dir/gist"; \
+	for file in events.h extern.h hash.h io.h play2.h std.h win.h; do \
+	  if test "$$file" = "win.h"; then \
+	    src="$(PLAY_WIN_H)"; \
+	  else \
+	    src="$(play.dir)/$$file"; \
+	  fi; \
+	  if test "$$file" = "play2.h"; then \
+	    dst="$$dir/$$file"; \
+	  else \
+	    dst="$$dir/play/$$file"; \
+	  fi; \
+	  cp -p "$$src" "$$dst"; \
+	  chmod 644 "$$dst"; \
+	done; \
+	for file in cgm.h draw.h gist2.h ps.h xfancy.h cgmin.h engine.h \
+	  hlevel.h text.h clip.h eps.h private.h xbasic.h; do \
+	  src="$(gist.dir)/$$file"; \
+	  if test "$$file" = "gist2.h"; then \
+	    dst="$$dir/$$file"; \
+	  else \
+	    dst="$$dir/gist/$$file"; \
+	  fi; \
+	  cp -p "$$src" "$$dst"; \
+	  chmod 644 "$$dst"; \
+	done; \
+	dir="$(DESTDIR)$(LIBDIR)"; \
+	mkdir -p "$$dir"; \
+	for file in libplay2.a libgist2.a; do \
+	  cp "$$file" "$$dir/$$file"; \
+	  chmod 644 "$$dir/$$file"; \
+	done; \
+	for file in libplay2$(PLUG_SFX) libgist2$(PLUG_SFX); do \
+	  cp "$$file" "$$dir/$$file"; \
+	  chmod 755 "$$dir/$$file"; \
+	done; \
+	dir="$(DESTDIR)$(LIBDIR)/play"; \
+	mkdir -p "$$dir"; \
+	for file in main.o Make.cfg; do \
+	  if test "$$file" = "main.o"; then \
+	    src="$(main.o)"; \
+	  else \
+	    src="$$file"; \
+	  fi; \
+	  dst="$$dir/$$file"; \
+	  cp -p "$$src" "$$dst"; \
+	  chmod 644 "$$dst"; \
+	done; \
+	dir="$(DESTDIR)$(BINDIR)"; \
+	mkdir -p "$$dir"; \
+	cp gist "$$dir"/gist; \
+	chmod 755 "$$dir"/gist
+	dir="$(DESTDIR)$(GIST_SITE)"; \
+	mkdir -p "$$dir"; \
+	for file in axes.gs coolwarm.gp heat.gp magma.gp plasma.gp \
+	    rainbow.gp vgbox.gs work2.gs boxed2.gs earth.gp inferno.gp \
+	    ncar.gp pscom.ps README vg.gs work.gs boxed.gs gray.gp \
+	    l_nobox.gs nobox.gs ps.ps stern.gp viridis.gp yarg.gp; do \
+	  src="$(srcdir)/etc/$$file"; \
+	  dst="$$dir/$$file"; \
+	  cp -p "$$src" "$$dst"; \
+	  chmod 644 "$$dst"; \
+	done
 
 libplay: libplay2.a libplay2$(PLUG_SFX)
 libgist: libgist2.a libgist2$(PLUG_SFX)
@@ -123,7 +193,6 @@ X11_DEPS=Makefile Make.cfg \
 
 #--- gist
 
-D_GISTPATH='-DGISTPATH="~/gist:~/Gist:$(GIST_SITE)/g"'
 
 BROWSER_OBJS = $(main.o) obj/gist/browser.o obj/gist/cgmin.o obj/gist/eps.o
 BENCH_OBJS = $(main.o) obj/gist/bench.o
