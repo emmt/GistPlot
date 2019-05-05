@@ -13,7 +13,11 @@ a.out
 *.dSYM/
 
 # specific build/work files, see also .gitignore in subdirectories
+build/
 tools/
+pic/
+obj/
+play/win.h
 Make.cfg
 cfg*
 *.doc

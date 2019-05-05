@@ -1,83 +1,189 @@
 #! /bin/sh
-# $Id: configure,v 1.1 2005-09-18 22:03:38 dhmunro Exp $
+#
+# Configuration script for Play and Gist libraries.
+#
 
-# debug=yes to keep all cfg.* stdout and stderr files
-# (most recent warnings always kept, usually don't need debug)
+progname=$(basename "$0")
+srcdir=$(dirname "$0")
+build=$PWD
+
+fatality=0
 debug=no
+prefix=/usr/local
+make=make
+shell=/bin/sh
 
-echo ""
-echo "=============== begin top level configuration ==============="
-echo ""
-
-while test -n "$1"; do
-  if test -d "$1"; then
-    if test -n "$pkgdirs"; then
-      pkgdirs="$pkgdirs $1"
-    else
-      pkgdirs="$1"
-    fi
-  else
-    echo "**** ERROR **** no such directory ($1) to configure"
-    echo "rerun ./configure with proper execute line"
+on_exit () {
+  if test $fatality = 0 -a "x$debug" = "xno"; then
+    rm -f cfg*
   fi
+}
+
+trap on_exit 0
+
+die () { fatal "$*"; exit $fatality; }
+
+fatal() { echo >&2 "FATAL - $*"; fatality=1; }
+
+warn() { echo >&2 "WARNING - $*"; }
+
+info() { echo >&2 "$*"; }
+
+# Escape spaces in given path.
+quote() { echo "$*" | sed -e 's/ /\\ /g'; }
+
+valueofoption () { echo "$*" | sed -e 's/^--[^=]*=//'; }
+
+help () {
+  cat <<EOF
+usage: $progname [-h|--help] ...
+options:
+  --prefix=PATH        Installation prefix [$prefix].
+  CC=COMMAND           C compiler [$CC], for instance:
+                         CC='gcc -pipe'
+  CFLAGS=FLAGS         Compiler and preprocessor flags [$CFLAGS], for instance:
+                         CFLAGS='-Wall -O2 -Isomedir'
+  LDFLAGS=FLAGS        Additional linker flags [$LDFLAGS].
+  AR=COMMAND           Archive command [$AR].
+  RANLIB=COMMAND       Command to generate archive index [$RANLIB].
+  MATHLIB=FLAGS        Linker flags for math library [$MATHLIB].
+  --deplibs=DEPLIBS    Flags for dependencies [$deplibs], for instance:
+                         --deplibs='-Lsomedir -lsomelib'
+  --make=MAKE          Make command [$make].
+  --shell=SHELL        Shell command [$shell].
+  --debug              Turn debug mode on (for this script).
+  -h, --help           Print this help and exit.
+EOF
+}
+
+while test $# -ge 1; do
+  arg=$1
   shift
+  case "$arg" in
+    -h | --help )
+      help
+      exit 0
+      ;;
+    --debug )
+      debug=yes
+      ;;
+    --prefix=* )
+      prefix=$(echo "$arg" | sed -e 's/^CFLAGS=//')
+      ;;
+    --cflags=* )
+      cflags=$(valueofoption "$arg")
+      ;;
+    --deplibs=* )
+      deplibs=$(valueofoption "$arg")
+      ;;
+    --make=* )
+      make=$(valueofoption "$arg")
+      ;;
+    --shell=* )
+      shell=$(valueofoption "$arg")
+      ;;
+    CC=* )
+      CC=$(echo "$arg" | sed -e 's/^CC=//')
+      ;;
+    CFLAGS=* )
+      CFLAGS=$(echo "$arg" | sed -e 's/^CFLAGS=//')
+      ;;
+    LDFLAGS=* )
+      LDFLAGS=$(echo "$arg" | sed -e 's/^LDFLAGS=//')
+      ;;
+    AR=* )
+      AR=$(echo "$arg" | sed -e 's/^AR=//')
+      ;;
+    RANLIB=* )
+      RANLIB=$(echo "$arg" | sed -e 's/^RANLIB=//')
+      ;;
+    MATHLIB=* )
+      MATHLIB=$(echo "$arg" | sed -e 's/^MATHLIB=//')
+      ;;
+    * )
+      die "Unknown option \"$arg\""
+  esac
 done
 
-if test -z "$CC" && make echocc >/dev/null 2>&1; then
-  CC=`cat cfg.tmp`
-  if test -z "$CC"; then CC=cc; fi
-  default_cc=yes
-else
-  default_cc=no
-fi
-if test -z "$RANLIB" && make echorl >/dev/null 2>&1; then
-  RANLIB=`cat cfg.tmp`
-fi
-if test -z "$AR" && make echoar >/dev/null 2>&1; then
-  AR=`cat cfg.tmp`
-  if test -z "$AR"; then AR=ar; fi
-fi
-rm -f cfg.*
-curdate=`date`
-cursystem=`uname -a`
+echo ""
+echo "  ============== begin compiler configuration ============="
+echo ""
+
+# Cleanup.
+rm -f cfg* config.h config.0h Make.cfg
+
+# Initial Makefile (needed for some default settings).
+src=$srcdir/Makefile.in
+dst=Makefile
+#cmp "$src" "$dst" >/dev/null 2>&1 || cp -pf "$src" "$dst"
+sed -e "s|^ *srcdir *=.*|srcdir=$srcdir|" <"$src" >"$dst"
+
+cfg_date=`date`
+cfg_system=`uname -a`
+
 cat >Make.cfg <<EOF
-# Make.cfg built by configure script on $curdate
-# $cursystem
-SHELL=/bin/sh
+# Make.cfg built by configure script on $cfg_date
+# $cfg_system
+SHELL=$shell
+MAKE=$make
 EOF
 
-# note: CFLAGS, LDFLAGS should NOT contain optimization flags (-g, -O, etc)
-# take care of common ones here (misses things like -fast etc)
-COPT=
-OTHR=
-if test -n "$CFLAGS"; then
-  for opt in $CFLAGS; do
-    case "$opt" in
-      -g|-O|-O[0-9])
-        if test -z "$COPT"; then COPT="$opt"; else COPT="$COPT $opt"; fi
-        ;;
-      *)
-        if test -z "$OTHR"; then OTHR="$opt"; else OTHR="$OTHR $opt"; fi
-        ;;
-    esac
-  done
+if test -z "$CC"; then
+  CC=$($make echo-cc 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-cc\` failed"
+  if test -z "$CC"; then
+    CC="cc"
+  fi
 fi
-CFLAGS="$OTHR"
-if test -z "$COPT"; then COPT="-O"; fi
-LOPT=
-OTHR=
+if test -z "$CFLAGS"; then
+  CFLAGS=$($make echo-cflags 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-cflags\` failed"
+  if test -z "$CFLAGS"; then
+    CFLAGS="-O2 -Wall"
+  fi
+fi
+if test -z "$LDFLAGS"; then
+  LDFLAGS=$($make echo-ldflags 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-ldflags\` failed"
+fi
+if test -z "$AR"; then
+  AR=$($make echo-ar 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-ar\` failed"
+  if test -z "$AR"; then
+    AR="ar"
+  fi
+fi
+if test -z "$RANLIB"; then
+  RANLIB=$($make echo-ranlib 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-ranlib\` failed"
+fi
+if test -z "$MATHLIB"; then
+  MATHLIB=$($make echo-mathlib 2>/dev/null)
+  test $? = 0 || die "command \`$make echo-mathlib\` failed"
+  if test -z "$MATHLIB"; then
+    MATHLIB="-lm"
+  fi
+fi
+
+# note: CFLAGS_NO_OPTIM and LDFLAGS should NOT contain optimization flags
+# (-g, -O, etc) take care of common ones here (misses things like -fast etc)
+flags=
+for opt in $CFLAGS; do
+    case "$opt" in
+      -g|-O|-O[0-9]) ;;
+      *) flags=${flags:+$flags }$opt;;
+    esac
+done
+CFLAGS_NO_OPTIM=$flags
 if test -n "$LDFLAGS"; then
+  flags=
   for opt in $LDFLAGS; do
     case "$opt" in
-      -g|-O|-O[0-9])
-        if test -z "$LOPT"; then LOPT="$opt"; else LOPT="$LOPT $opt"; fi
-        ;;
-      *)
-        if test -z "$OTHR"; then OTHR="$opt"; else OTHR="$OTHR $opt"; fi
-        ;;
+      -g|-O|-O[0-9]) ;;
+      *) flags=${flags:+$flags }$opt;;
     esac
   done
-  LDFLAGS="$OTHR"
+  LDFLAGS="$flags"
 fi
 
 #------------------------------------------------------------------------
@@ -108,31 +214,32 @@ int main(int argc, char *argv[])
   return oops(l>3? locl : &glbl);
 }
 EOF
-if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.00a 2>&1; then
-  :
-elif $CC -Aa $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.00b 2>&1; then
-  CC="$CC -Aa"
-  if test $debug = no; then rm -f cfg.00a; fi
-elif gcc $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.00b 2>&1; then
-  CC=gcc
-  if test $debug = no; then rm -f cfg.00b; fi
-else
-  rm -f cfg cfg.c
-  echo "$CC is not an ANSI C compiler; rerun ./configure with CC env variable"
-  exit 1
+log=cfg.00
+if ! $CC $CFLAGS -o cfg cfg.c $LDFLAGS >${log}a 2>&1; then
+  if $CC -Aa $CFLAGS -o cfg cfg.c $LDFLAGS >${log}b 2>&1; then
+    CC="$CC -Aa"
+  elif gcc $CFLAGS -o cfg cfg.c $LDFLAGS >${log}c 2>&1; then
+    CC=gcc
+  elif clang $CFLAGS -o cfg cfg.c $LDFLAGS >${log}d 2>&1; then
+    CC=clang
+  else
+    die "$CC is not an ANSI C compiler; rerun configure with CC env variable"
+  fi
 fi
-if $CC $CFLAGS -c cfg.c >cfg.00c 2>&1; then
+if $CC $CFLAGS -c cfg.c >${log}e 2>&1; then
   echo "$CC is an ANSI C compiler.  Good."
 else
-  echo "$CC loads but won't compile?  check cfg.00[abc] file messages"
-  exit 1
+  die "$CC loads but won't compile?  check ${log}[a-e] file messages"
+fi
+if test "x$debug" = "xno"; then
+  rm -f cfg cfg.exe ${log}[a-e]
 fi
 
 #------------------------------------------------------------------------
 # check whether ranlib exists and is necessary
-if $AR cr cfg.a cfg.o >cfg.00d 2>&1; then
-  if ${RANLIB:-ranlib} cfg.a >cfg.00e 2>&1; then
-    if test -s cfg.00e && grep "already did it" cfg.00e >/dev/null 2>&1; then
+if $AR cr cfg.a cfg.o >${log}f 2>&1; then
+  if ${RANLIB:-ranlib} cfg.a >${log}g 2>&1; then
+    if test -s ${log}g && grep "already did it" ${log}g >/dev/null 2>&1; then
       RANLIB=:
     else
       RANLIB=${RANLIB:-ranlib}
@@ -141,22 +248,25 @@ if $AR cr cfg.a cfg.o >cfg.00d 2>&1; then
     RANLIB=:
   fi
 else
-  echo "ar utility broken?  check messages in file cfg.00d"
-  exit 1
+  die "ar ($AR) utility broken?  check messages in file ${log}f"
 fi
-rm -f cfg cfg.exe cfg.c cfg.o cfg.a cfg.00d cfg.00e
+if test "x$debug" = "xno"; then
+  rm -f cfg.a cfg.o ${log}[fg]
+fi
 
-echo "RANLIB=$RANLIB" >>Make.cfg
-echo "AR=$AR" >>Make.cfg
+#------------------------------------------------------------------------
+# Guess architecture.
+#
+os_name=$(uname -s 2>/dev/null) || os_name=unknown
 
 PLAY_DIRS="unix x11"
 PLAY_INCS="-I../unix -I../x11"
 PLAY_CFG=../unix
-GIST_MAIN_C=unix/pmain.c
+PLAY_MAIN_C=unix/pmain.c
+PLAY_MAIN_O=unix/pmain.o
 YWIN_LIB=
 YWIN_DEF=
 EXE_SFX=
-win32=no
 cat >cfg.c <<EOF
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
@@ -165,13 +275,18 @@ int main(int argc, char *argv[]) { return 0; }
 #error not MSWindows
 #endif
 EOF
-if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.01a 2>&1; then
+if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >${log}h 2>&1; then
   PLAY_INCS=-I../win
   PLAY_CFG=../win
-  GIST_MAIN_C=win/cygmain.c
+  PLAY_OBJS="\$(ANY_OBJS) \$(WIN_OBJS)"
+  PLAY_PICS="\$(ANY_PICS) \$(WIN_PICS)"
+  PLAY_WIN_H="\$(srcdir)/play/win/playwin.h"
+  PLAY_MAIN_C=win/cygmain.c
+  PLAY_MAIN_O=win/cygmain.o
   YWIN_LIB=exports.def
   YWIN_DEF='$(PKG_DEF)'
-  win32=yes
+  arch=win32
+  x11=no
   if test "$default_cc" = yes; then
     CC=gcc
   fi
@@ -182,28 +297,23 @@ int main(int argc, char *argv[]) { return 0; }
 #error not Cygwin
 #endif
 EOF
-  if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.01a 2>&1; then
-    win32=cygwin
-  else
-    rm -f cfg.01a
+  if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >${log}h 2>&1; then
+    arch=cygwin
   fi
   if test -z "$USEUNIX"; then
-    if test "$win32" = cygwin; then
+    if test "$arch" = cygwin; then
       cat >cfg.c <<EOF
 int main(int argc, char *argv[]) { return 0; }
 EOF
-      if $CC -mno-cygwin $CFLAGS -o cfg cfg.c $LDFLAGS >cfg.01a 2>&1; then
+      if $CC -mno-cygwin $CFLAGS -o cfg cfg.c $LDFLAGS >${log}h 2>&1; then
         CC="$CC -mno-cygwin"
-      else
-        rm -f cfg.01a
       fi
     fi
     PLAY_DIRS=win
     EXE_SFX=.exe
   fi
 else
-  rm -f cfg.01a
-  os_name=`(uname -s) 2>/dev/null` || os_name=unknown
+  arch=unix
   case "$os_name" in
     AIX)        # IBM RS/6000 (powerpc) architecture
       YWIN_LIB=exports.def
@@ -212,32 +322,27 @@ else
   if test -n "$NO_XLIB"; then
     PLAY_DIRS=unix
     PLAY_INCS="-I../unix"
-    CFLAGS="$CFLAGS -DNO_XLIB"
-    echo "X11OBJS=" >>Make.cfg
+    PLAY_OBJS="\$(ANY_OBJS) \$(UNIX_OBJS)"
+    PLAY_PICS="\$(ANY_PICS) \$(UNIX_PICS)"
+    PLAY_WIN_H="\$(srcdir)/play/x11/playwin.h"
+    XDEFS="${XDEFS:+$XDEFS }-DNO_XLIB"
+    x11=no
+  else
+    PLAY_OBJS="\$(ANY_OBJS) \$(UNIX_OBJS) \$(X11_OBJS)"
+    PLAY_PICS="\$(ANY_PICS) \$(UNIX_PICS) \$(X11_PICS)"
+    PLAY_WIN_H="\$(srcdir)/play/x11/playwin.h"
+    x11=yes
   fi
 fi
+if test "x$debug" = "xno"; then
+  rm -f ${log}h
+fi
 rm -f cfg cfg.exe cfg.c
-
-echo "PLAY_DIRS=$PLAY_DIRS" >>Make.cfg
-echo "PLAY_INCS=$PLAY_INCS" >>Make.cfg
-echo "PLAY_CFG=$PLAY_CFG" >>Make.cfg
-echo "GIST_MAIN_C=$GIST_MAIN_C" >>Make.cfg
-echo "YWIN_LIB=$YWIN_LIB" >>Make.cfg
-echo "YWIN_DEF=$YWIN_DEF" >>Make.cfg
-echo "EXE_SFX=$EXE_SFX" >>Make.cfg
-echo "CC=$CC" >>Make.cfg
-echo "GIST_CFLAGS=$CFLAGS" >>Make.cfg
-echo "GIST_LDFLAGS=$LDFLAGS" >>Make.cfg
-echo "COPT_DEFAULT=$COPT" >>Make.cfg
 
 #------------------------------------------------------------------------
 # check alternate libm for Alpha Linux (see play/unix/README.fpu)
 
-if test -z "$MATHLIB" && make echoml >/dev/null 2>&1; then
-  MATHLIB=`cat cfg.tmp`
-  rm -f cfg.tmp
-  if test -z "$MATHLIB"; then MATHLIB="-lm"; fi
-  cat >cfg.c <<EOF
+cat >cfg.c <<EOF
 /* check whether libm is broken */
 #include <math.h>
 int main(int argc, char *argv[])
@@ -245,52 +350,800 @@ int main(int argc, char *argv[])
   return exp(-720.) > 1.0;  /* typically an IEEE denormal */
 }
 EOF
-  if $CC $CFLAGS -o cfg cfg.c $LDFLAGS $MATHLIB >cfg.00f 2>&1; then
-    if ./cfg >cfg.00g 2>&1; then
-      :
-    else
-      if $CC $CFLAGS -o cfg cfg.c $LDFLAGS -lcpml >cfg.00h 2>&1; then
-        MATHLIB="-lcpml"
-        echo "WARNING - using -lcpml instead of -lm"
-      else
-        rm -f cfg.00h
-        echo "WARNING - libm broken? see play/unix/README.fpu"
-        echo "  if on Alpha Linux, rerun ./configure with CC='gcc -mieee'"
-      fi
-    fi
-    rm -f cfg cfg.exe cfg.c cfg.00g
+if $CC $CFLAGS -o cfg cfg.c $LDFLAGS $MATHLIB >${log}i 2>&1; then
+  if ./cfg >${log}j 2>&1; then
+    rm -f cfg cfg.exe cfg.c ${log}i ${log}j
+  elif $CC $CFLAGS -o cfg cfg.c $LDFLAGS -lcpml >${log}k 2>&1 \
+       && ./cfg >${log}j 2>&1; then
+    rm -f cfg cfg.exe cfg.c ${log}i ${log}k
+    warn "using -lcpml instead of $MATHLIB"
+    MATHLIB="-lcpml"
   else
-    echo "math library missing; rerun ./configure with MATHLIB env variable"
-    exit 1
+    rm -f ${log}k
+    fatal "libm broken? see play/unix/README.fpu"
+    echo "  if on Alpha Linux, rerun configure with CC='gcc -mieee'"
+    exit $fatality
+  fi
+  rm -f cfg cfg.exe cfg.c
+  if test "x$debug" = "xno"; then
+    rm -f ${log}*
   fi
 else
-  rm -f cfg.tmp
-fi
-echo "MATHLIB=$MATHLIB" >>Make.cfg
-
-#----------------------------------------------------------------------
-# clean up, issue warning if compiler gave fishy output
-rm -f cfg cfg.exe cfg.c cfg.o
-for f in cfg.[0-9]*; do
-  if grep ... $f >/dev/null 2>&1; then   # or use test -s $f ?
-    echo "WARNING - check compiler message in $f"
-  else # remove empty files
-    rm -f $f
+  if test "x$debug" = "xno"; then
+    rm -f cfg cfg.exe cfg.c ${log}*
   fi
-done
+  die "math library missing; rerun ./configure with MATHLIB env variable"
+fi
 
-#----------------------------------------------------------------------
-# set up installation directories
+#------------------------------------------------------------------------
+# Dump options in Make.cfg
 
-#----------------------------------------------------------------------
-# set up optional packages
-
-#----------------------------------------------------------------------
-# configure subdirectories
-
-make "PKGDIRS=$pkgdirs" pkgconfig
+cat >>Make.cfg <<EOF
+PREFIX=$prefix
+CC=$CC
+CFLAGS=$CFLAGS
+CFLAGS_NO_OPTIM=$CFLAGS_NO_OPTIM
+LDFLAGS=$LDFLAGS
+MATHLIB=$MATHLIB
+AR=$AR
+RANLIB=$RANLIB
+YWIN_LIB=$YWIN_LIB
+YWIN_DEF=$YWIN_DEF
+EXE_SFX=$EXE_SFX
+EOF
 
 echo ""
-echo "================ all configuration completed ================"
-exit 0
-#----------------------------------------------------------------------
+echo "  =============== end compiler configuration =============="
+
+#------------------------------------------------------------------------
+# Other configurations.
+if test "$arch" = "unix"; then
+
+  echo ""
+  echo "  ============= begin play/unix configuration ============="
+  echo ""
+
+  cat >config.h <<EOF
+/* config.h used during config.sh script */
+#ifndef CONFIG_SCRIPT
+# error destroy this config.h and rerun configure script
+#endif
+EOF
+  cat >config.0h <<EOF
+/* config.h from config.sh script $cfg_date
+ * $cfg_system
+ * always empty -- see D_... defines in Make.cfg
+ */
+EOF
+  # should LD_LIBRARY_PATH, LIBPATH (AIX), LPATH, SHLIB_PATH (HPUX) be saved?
+
+  cflags="$CFLAGS -I. -I"$(quote "$srcdir")" -I"$(quote "$srcdir/play")" -I"$(quote "$srcdir/unix")
+  config_c=$(quote "$srcdir/play/unix/config.c")
+  commonargs="-DCONFIG_SCRIPT $cflags $LDFLAGS -o cfg $config_c"
+
+  # find CPU time function (getrusage is best if present)
+  log=cfg.01
+  D_TIMEU=""
+  args="-DTEST_UTIME $commonargs"
+  if $CC -DUSE_GETRUSAGE $args >${log}a 2>&1; then
+    echo "using getrusage() (CPU timer)"
+    D_TIMEU="-DUSE_GETRUSAGE"
+  elif $CC -DUSE_TIMES $args >${log}b 2>&1; then
+    echo "using times() (CPU timer)"
+    D_TIMEU="-DUSE_TIMES"
+    if test "x$debug" = "xno"; then rm -f ${log}a; fi
+  elif $CC $args >${log}c 2>&1; then
+    echo "fallback to clock(), getrusage() and times() missing (CPU timer)"
+  else
+    fatal "getrusage(), times(), and clock() all missing (timeu.c)"
+  fi
+
+  # find wall time function (gettimeofday is best if present)
+  log=cfg.02
+  D_TIMEW=""
+  args="-DTEST_WTIME $commonargs"
+  if $CC -DUSE_GETTIMEOFDAY $args >${log}a 2>&1; then
+    echo "using gettimeofday() (wall timer)"
+    D_TIMEW="-DUSE_GETTIMEOFDAY"
+  elif $CC $args >${log}b 2>&1; then
+    echo "fallback to time()+difftime(), gettimeofday() missing (wall timer)"
+  else
+    fatal "gettimeofday(), and time() or difftime() missing (timew.c)"
+  fi
+
+  # find function to get user name
+  log=cfg.03
+  D_USERNM=""
+  if test -z "$NO_PASSWD"; then
+    args="-DTEST_USERNM $commonargs"
+    if $CC $args >${log}a 2>&1; then
+      echo "using POSIX getlogin(), getpwuid(), getuid() functions"
+    elif $CC -DNO_PASSWD $args >${log}b 2>&1; then
+      echo "fallback to cuserid(), POSIX getlogin() family missing"
+      D_USERNM="-DNO_PASSWD"
+    else
+      fatal "cuserid(), POSIX getlogin() family both missing (usernm.c)"
+    fi
+  else
+    if test -z "$NO_CUSERID"; then
+      echo "using cuserid(), POSIX getlogin() family missing"
+      D_USERNM="-DNO_PASSWD"
+    else
+      echo "using getenv(LOGNAME), cuserid(), POSIX getlogin() family missing"
+      D_USERNM="-DNO_PASSWD -DNO_CUSERID"
+    fi
+  fi
+
+  # find function to get controlling terminal process group
+  log=cfg.04
+  D_UINBG1=""
+  D_UINBG2=""
+  D_NO_PROCS=""
+  if test -z "$NO_PROCS"; then
+    args="-DTEST_TIOCGPGRP $commonargs"
+    cargs="-DTEST_TIOCGPGRP -DCONFIG_SCRIPT $cflags $LDFLAGS -c $config_c"
+    if $CC $cargs >${log}a 2>&1; then
+      :
+    elif $CC -DUSE_POSIX_GETPGRP $cargs >${log}a 2>&1; then
+      echo "using strict POSIX getpgrp prototype"
+      args="-DUSE_POSIX_GETPGRP -DTEST_TIOCGPGRP $commonargs"
+      D_UINBG1="-DUSE_POSIX_GETPGRP"
+    fi
+    if $CC $args >${log}a 2>&1; then
+      echo "using POSIX tcgetpgrp() function"
+    elif $CC '-DUSE_TIOCGPGRP_IOCTL=<sys/termios.h>' $args >${log}b 2>&1; then
+      echo "fallback to TIOCGPGRP in sys/termios.h, POSIX tcgetpgrp() missing"
+      D_UINBG2="-DUSE_TIOCGPGRP_IOCTL='<sys/termios.h>'"
+    elif $CC '-DUSE_TIOCGPGRP_IOCTL=<sgtty.h>' $args >${log}c 2>&1; then
+      echo "fallback to TIOCGPGRP in sgtty.h, POSIX tcgetpgrp() missing"
+      D_UINBG2="-DUSE_TIOCGPGRP_IOCTL='<sgtty.h>'"
+      if test "x$debug" = "xno"; then rm -f ${log}b; fi
+    else
+      fatal "unable to find TIOCGPGRP ioctl header (uinbg.c)"
+    fi
+  else
+    echo "using no processes, tcgetpgrp(), popen(), system() missing"
+    D_UINBG1="-DNO_PROCS"
+    D_NO_PROCS="-DNO_PROCS"
+  fi
+
+  # find function to get current working directory
+  log=cfg.05
+  D_DIR1=""
+  args="-DTEST_GETCWD $commonargs"
+  if $CC $args >${log}a 2>&1; then
+    echo "using POSIX getcwd() function"
+  elif $CC -DUSE_GETWD $args >${log}b 2>&1; then
+    echo "fallback to getwd(), POSIX getcwd() missing"
+    D_DIR1="-DUSE_GETWD"
+  else
+    fatal "getcwd(), getwd() both missing (dir.c)"
+  fi
+
+  # find headers required to read directories
+  log=cfg.06
+  D_DIR2=""
+  args="-DTEST_DIRENT $commonargs"
+  if $CC $args >${log}a 2>&1; then
+    echo "using POSIX dirent.h header for directory ops"
+  elif $CC '-DDIRENT_HEADER=<sys/dir.h>' $args >${log}b 2>&1; then
+    echo "using sys/dir.h header for directory ops"
+    D_DIR2="-DDIRENT_HEADER=<sys/dir.h>"
+    if test "x$debug" = "xno"; then rm -f ${log}a; fi
+  elif $CC '-DDIRENT_HEADER=<sys/ndir.h>' $args >${log}c 2>&1; then
+    echo "using sys/ndir.h header for directory ops"
+    D_DIR2="-DDIRENT_HEADER=<sys/ndir.h>"
+    if test "x$debug" = "xno"; then rm -f ${log}a ${log}b; fi
+  elif $CC '-DDIRENT_HEADER=<ndir.h>' $args >${log}d 2>&1; then
+    echo "using ndir.h header for directory ops"
+    D_DIR2="-DDIRENT_HEADER=<ndir.h>"
+    if test "x$debug" = "xno"; then rm -f ${log}a ${log}b ${log}c; fi
+  else
+    fatal "dirent.h, sys/dir.h, sys/ndir.h, ndir.h all missing (dir.c)"
+  fi
+
+  # find headers and functions required for poll/select functionality
+  # NO_PROCS=yes  produces crippled yorick that blocks waiting for stdin
+  # NO_POLL=yes   forces use of select(), otherwise poll() used if found
+  log=cfg.07
+  D_UEVENT=""
+  if test -z "$NO_PROCS"; then
+    if test -x /usr/bin/sw_vers; then
+      # Mac OS X 10.4 poll() is broken, but select() works
+      swv="`/usr/bin/sw_vers -productVersion`"
+      case "$swv" in
+        # 10.4*) NO_POLL=yes ;;
+        # even though poll works before 10.4, want yorick built on
+        # 10.3 system to be able to run on a 10.4 system!
+        10.*) NO_POLL=yes ;;
+      esac
+    fi
+    if test -z "$NO_POLL"; then
+      args="-DTEST_POLL $commonargs"
+      if $CC $args >${log}a 2>&1; then
+        echo "using poll(), poll.h header"
+      elif $CC -DUSE_SYS_POLL_H $args >${log}b 2>&1; then
+        echo "using poll(), sys/poll.h header"
+        D_UEVENT="-DUSE_SYS_POLL_H"
+        if test "x$debug" = "xno"; then rm -f ${log}a; fi
+      else
+        NO_POLL=yes
+      fi
+    fi
+    if test -n "$NO_POLL"; then
+      maxdefs="-DUSE_SELECT -DNO_SYS_TIME_H -DNEED_SELECT_PROTO"
+      if $CC -DUSE_SELECT -DHAVE_SYS_SELECT_H $args >${log}c 2>&1; then
+        echo "using select(), sys/select.h header"
+        D_UEVENT="-DUSE_SELECT -DHAVE_SYS_SELECT_H"
+        if test "x$debug" = "xno"; then rm -f ${log}a ${log}b; fi
+      elif $CC -DUSE_SELECT -DNEED_SELECT_PROTO $args >${log}d 2>&1; then
+        echo "using select(), sys/time.h, sys/types.h headers"
+        D_UEVENT="-DUSE_SELECT -DNEED_SELECT_PROTO"
+        if test "x$debug" = "xno"; then rm -f ${log}[a-c]; fi
+      elif $CC $maxdefs $args >${log}e 2>&1; then
+        echo "using select(), time.h, sys/types.h headers"
+        D_UEVENT="$maxdefs"
+        if test "x$debug" = "xno"; then rm -f ${log}[a-d]; fi
+      elif $CC -DUSE_SELECT $args >${log}f 2>&1; then
+        echo "using select(), sys/time.h header"
+        D_UEVENT="-DUSE_SELECT"
+        if test "x$debug" = "xno"; then rm -f ${log}[a-e]; fi
+      elif $CC -DUSE_SELECT -DNO_SYS_TIME_H $args >${log}g 2>&1; then
+        echo "using select(), time.h header"
+        D_UEVENT="-DUSE_SELECT -DNO_SYS_TIME_H"
+        if test "x$debug" = "xno"; then rm -f ${log}[a-f]; fi
+      else
+        fatal "neither poll() nor select() usable? (uevent.c, upoll.c)"
+      fi
+    fi
+  else
+    # NO_PROCS is not really related to NO_POLLING, but is intended for
+    # the catamount parallel kernel, which is missing both process
+    # fork and select/poll
+    echo "missing poll() and select(), using blocking stdin"
+    D_UEVENT="-DUSE_SELECT -DNO_POLLING"
+  fi
+
+  # support for network sockets
+  log=cfg.08
+  D_NO_SOCKETS=""
+  if test -z "$NO_SOCKETS"; then
+    args="-DTEST_SOCKETS $commonargs"
+    if $CC $args >${log} 2>&1; then
+      echo "using BSD sockets"
+      if test "x$debug" = "xno"; then rm -f ${log}; fi
+    else
+      echo "missing BSD sockets, socket interface disabled"
+      D_NO_SOCKETS="-DNO_SOCKETS"
+    fi
+  else
+    echo "skipping sockets, socket interface disabled"
+    D_NO_SOCKETS="-DNO_SOCKETS"
+  fi
+
+  #----------------------------------------------------------------------
+  # try to figure out how to get SIGFPE delivered
+  #----------------------------------------------------------------------
+  log=cfg.09
+  fputest_c=$(quote "$srcdir/play/unix/fputest.c")
+  args="-DCONFIG_SCRIPT $cflags $LDFLAGS -o fputest $fputest_c"
+  FPELIB=
+  FPELIBM=
+  if test -n "$FPU_IGNORE"; then
+    D_FPUSET=
+  elif $CC -DFPU_DIGITAL $args >${log} 2>&1; then
+    echo "using FPU_DIGITAL (SIGFPE delivery)"
+    D_FPUSET=-DFPU_DIGITAL
+  elif $CC -DFPU_AIX $args >${log} 2>&1; then
+    echo "using FPU_AIX (SIGFPE delivery)"
+    D_FPUSET=-DFPU_AIX
+  elif $CC -DFPU_HPUX $args $MATHLIB >${log} 2>&1; then
+    echo "using FPU_HPUX (SIGFPE delivery)"
+    D_FPUSET=-DFPU_HPUX
+    FPELIBM=$MATHLIB
+  elif $CC -DFPU_SOLARIS $args >${log} 2>&1; then
+    echo "using FPU_SOLARIS (SIGFPE delivery)"
+    D_FPUSET=-DFPU_SOLARIS
+    # note this works under IRIX 6.3, while FPU_IRIX does not??
+  elif $CC -DFPU_SUN4 $args $MATHLIB >${log} 2>&1; then
+    echo "using FPU_SUN4 (-lm) (SIGFPE delivery)"
+    D_FPUSET=-DFPU_SUN4
+    FPELIBM=$MATHLIB
+  elif $CC -DFPU_SUN4 $args -lsunmath >${log} 2>&1; then
+    echo "using FPU_SUN4 (-lsunmath) (SIGFPE delivery)"
+    D_FPUSET=-DFPU_SUN4
+    FPELIB=-lsunmath
+  elif $CC -DFPU_IRIX $args -lfpe >${log} 2>&1; then
+    # FPU_SOLARIS seems to work better??
+    echo "using FPU_IRIX (SIGFPE delivery)"
+    D_FPUSET=-DFPU_IRIX
+    FPELIB=-lfpe
+  elif $CC -DFPU_IRIX $args >${log} 2>&1; then
+    echo "using FPU_IRIX (SIGFPE delivery), but no libfpe??"
+    D_FPUSET=-DFPU_IRIX
+  elif $CC -DFPU_GCC_X86_64 $args >${log} 2>&1; then
+    echo "using FPU_GCC_X86_64 (SIGFPE delivery)"
+    D_FPUSET=-DFPU_GCC_X86_64
+  elif $CC -DFPU_GCC_X86 $args >${log} 2>&1; then
+    echo "using FPU_GCC_X86 (SIGFPE delivery)"
+    D_FPUSET=-DFPU_GCC_X86
+  elif $CC -DFPU_MACOSX $args >${log} 2>&1; then
+    echo "using FPU_MACOSX (SIGFPE delivery)"
+    D_FPUSET=-DFPU_MACOSX
+  elif $CC -DFPU_GNU_FENV $args $MATHLIB >${log} 2>&1; then
+    echo "using FPU_GNU_FENV (SIGFPE delivery)"
+    D_FPUSET=-DFPU_GNU_FENV
+    FPELIBM=$MATHLIB
+  elif $CC -DFPU_UNICOS $args $MATHLIB >${log} 2>&1; then
+    echo "using FPU_UNICOS (SIGFPE delivery)"
+    D_FPUSET=-DFPU_UNICOS
+    FPELIBM=$MATHLIB
+  elif $CC -DTEST_GCC $commonargs >${log} 2>&1; then
+    if $CC -DFPU_ALPHA_LINUX $args >${log} 2>&1; then
+      echo "using FPU_ALPHA_LINUX (SIGFPE delivery)"
+      D_FPUSET=-DFPU_ALPHA_LINUX
+      echo "...libm may be broken -- read play/unix/README.fpu for more"
+      echo "...fputest failure may not mean that yorick itself is broken"
+      # CC="$CC -mfp-trap-mode=su -mtrap-precision=i"
+    elif $CC -DFPU_GCC_I86 $args >${log} 2>&1; then
+      echo "using FPU_GCC_I86 (SIGFPE delivery)"
+      D_FPUSET=-DFPU_GCC_I86
+    elif $CC -DFPU_GCC_SPARC $args >${log} 2>&1; then
+      echo "using FPU_GCC_SPARC (SIGFPE delivery)"
+      D_FPUSET=-DFPU_GCC_SPARC
+    elif $CC -DFPU_GCC_M68K $args >${log} 2>&1; then
+      echo "using FPU_GCC_M68K (SIGFPE delivery)"
+      D_FPUSET=-DFPU_GCC_M68K
+    elif $CC -DFPU_GCC_POWERPC $args >${log} 2>&1; then
+      echo "using FPU_GCC_POWERPC (SIGFPE delivery)"
+      D_FPUSET=-DFPU_GCC_POWERPC
+    elif $CC -DFPU_GCC_ARM $args >${log} 2>&1; then
+      echo "using FPU_GCC_ARM (SIGFPE delivery)"
+      D_FPUSET=-DFPU_GCC_ARM
+    else
+      D_FPUSET=
+    fi
+  fi
+  if test -z "$D_FPUSET"; then
+    if $CC -DFPU_IGNORE $args $MATHLIB >${log} 2>&1; then
+      echo "using FPU_IGNORE (SIGFPE delivery)"
+      D_FPUSET=-DFPU_IGNORE
+    else
+      # FIXME: should be fatal?
+      warn "unable to build SIGFPE fputest? (fputest.c, fpuset.c)"
+    fi
+  fi
+  if test -n "$D_FPUSET"; then
+    # on IRIX be sure that TRAP_FPE environment variable is turned off
+    unset TRAP_FPE
+    if ./fputest >/dev/null 2>&1; then
+      :
+    else
+      echo ""
+      echo "*************************WARNING***************************"
+      echo "*** play/unix configuration failed to get SIGFPE delivered"
+      echo "*** read the notes in play/unix/README.fpu"
+      echo "*************************WARNING***************************"
+      echo ""
+    fi
+  fi
+  rm -f fputest
+
+  # check if fenv.h present
+  log=cfg.10
+  D_HAS_FENV_H=""
+  D_USE_SOFTFPE=""
+  args="-DTEST_FENV_H $commonargs"
+  if $CC $args $MATHLIB >${log} 2>&1; then
+    echo "found fenv.h header"
+    D_HAS_FENV_H="-DHAS_FENV_H"
+    if test "$D_FPUSET" = "-DFPU_IGNORE"; then
+      echo "...activating software SIGFPE support"
+      D_USE_SOFTFPE="-DUSE_SOFTFPE"
+    fi
+    if test "x$debug" = "xno"; then rm -f ${log}; fi
+  else
+    warn "fenv.h missing, no floating point environment control"
+    D_HAS_FENV_H=""
+  fi
+
+  #----------------------------------------------------------------------
+  # try to figure out how dynamic linking for plugins works
+  #----------------------------------------------------------------------
+  log=cfg.11
+  PLUG_UDL=""
+  PLUG_EXPORT=""
+  PLUG_LIB=""
+  PLUG_PIC=""
+  PLUG_SHARED=""
+  PLUG_SFX=""
+  PLUG_DEF=""
+  PLUG_DEF=""
+  #os_name=`uname -s 2>/dev/null` || os_name=unknown
+  case "$os_name" in
+    AIX)        # IBM RS/6000 (powerpc) architecture
+      # no such thing as non-PIC so no PLUG_PIC flag
+      # -bexpall fails for symbols beginning with _   <--WARNING
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT='-Wl,-bexpall,-brtl'
+      PLUG_LIB=-ldl
+      PLUG_PIC=
+      PLUG_SHARED=-G
+      PLUG_SFX=.so
+      ;;
+    IRIX*)       # SGI MIPS architecture
+      # PLUG_EXPORT with -Wl,-hidden_symbol ??
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=
+      PLUG_LIB=
+      PLUG_PIC=
+      PLUG_SHARED=-shared
+      PLUG_SFX=.so
+      ;;
+    SunOS)      # Sun SPARC architecture
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=
+      PLUG_LIB=-ldl
+      PLUG_PIC=-KPIC
+      PLUG_SHARED="-KPIC -G"
+      PLUG_SFX=.so
+      ;;
+    OSF1)       # DEC/Compaq/HP alpha architecture
+      # PLUG_EXPORT with -Wl,-non_hidden ??
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=
+      PLUG_LIB=
+      PLUG_PIC=
+      PLUG_SHARED="-shared -Wl,-expect_unresolved,*"
+      PLUG_SFX=.so
+      ;;
+    HP-UX)      # HP PA-RISC architecture
+      PLUG_UDL=-DPLUG_HPUX
+      PLUG_EXPORT=-Wl,-E
+      PLUG_LIB=-ldld
+      PLUG_PIC=+Z
+      PLUG_SHARED=-n
+      PLUG_SFX=.sl
+      ;;
+    Darwin)     # Apple MacOS X powerpc architecture (ignore i86 versions?)
+      # for Mac OS X 10.3 and earlier, use -DPLUG_MACOSX
+      # see https://developer.apple.com/library/mac/#qa/qa1180/_index.html
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=
+      PLUG_LIB=
+      PLUG_PIC=
+      PLUG_SHARED="-bundle -bundle_loader ./cfg"
+      PLUG_SFX=.so
+      ;;
+    CYGWIN*)    # CygWin i86 UNIX environment for MS Windows
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=
+      PLUG_LIB=
+      PLUG_PIC=-DPLUG_IN
+      PLUG_SHARED=-shared
+      PLUG_SFX=.dll
+      PLUG_DEF=cygyor.def
+      ;;
+    *)          # Linux, Free/Net/OpenBSD i86 architecture
+      # these are generic GNU/gcc values, also work for Intel/icc
+      PLUG_UDL=-DPLUG_LIBDL
+      PLUG_EXPORT=-Wl,-E
+      PLUG_LIB=-ldl
+      PLUG_PIC=-fPIC
+      PLUG_SHARED="-fPIC -shared"
+      PLUG_SFX=.so
+      ;;
+  esac
+
+  # command to link plugin
+  LD_PLUGIN="$CC $CFLAGS $LDFLAGS $PLUG_SHARED"
+
+  # no compiler switch to make Mac OS X .dylib
+  # need special env var to be able to call things in loading program
+  # none of this is necessary with -bundle instead of .dylib
+  # Makefile needs two lines to link with either CC or libtool
+  #PLUG_UNIX=""
+  #PLUG_OSX=":"
+  #  export MACOSX_DEPLOYMENT_TARGET
+  #  MACOSX_DEPLOYMENT_TARGET=10.3
+  #  LD_PLUGIN="libtool -dynamic $PLUG_SHARED"
+  #  PLUG_UNIX=":"
+  #  PLUG_OSX='MACOSX_DEPLOYMENT_TARGET=10.3 libtool -dynamic $(PLUG_SHARED)'
+
+  # find functions to do dynamic linking for plugins
+  # first check that TEST_PLUG branch of config.c/udltest.c compiles and loads
+  #   this checks PLUG_UDL, PLUG_EXPORT, and PLUG_LIB settings
+  dl_works=no
+  if test -z "$NO_PLUGINS"; then
+    args="$cflags $PLUG_EXPORT $PLUG_UDL $LDFLAGS -o cfg $config_c"
+    if $CC -DTEST_PLUG $args $PLUG_LIB >${log} 2>&1; then
+      # next check that PLUG_PIC flag works, so can build shareable object code
+      args="$CFLAGS $PLUG_PIC"
+      if $CC -DTEST_SHARED $args -c "$srcdir/play/unix/udltest.c" >${log}a 2>&1; then
+        # next check that PLUG_SHARED flag works, so can build dynamic libraries
+        if $LD_PLUGIN -o udltest$PLUG_SFX $PLUG_DEF udltest.o >${log}b 2>&1; then
+          # finally check that dynamically linked main program runs
+          if ./cfg; then
+            echo "configured plugins for $os_name"
+            dl_works=yes
+          else
+            echo "WARNING - no plugins: shared lib run failed"
+          fi
+        else
+          echo "WARNING - no plugins: shared lib link failed"
+        fi
+        rm -f udltest$PLUG_SFX
+      else
+        echo "WARNING - no plugins: shared object compile failed"
+      fi
+      rm -f udltest.o
+
+    else
+      echo "WARNING - no plugins: dynamic linking main failed to build"
+    fi
+  fi
+
+  ALT_LIBS=
+  IF_TGT='$(IF_DLL)'
+  if test $dl_works = no; then
+    PLUG_UDL=-DPLUG_UNSUPPORTED
+    PLUG_EXPORT=
+    PLUG_LIB=
+    PLUG_PIC=
+    PLUG_SHARED=
+    PLUG_DEF=
+    echo "DEFAULT_TGT=exe" >>Make.cfg
+    ALT_LIBS='$(DIST_LIBS)'
+    IF_TGT='$(IF_EXE)'
+  else
+    case "$os_name" in
+      AIX)
+        PLUG_EXPORT='-Wl,-bE:$(GIST_LIBEXE)/exports.def,-brtl'
+        ;;
+      OSF1)
+        # fix quoting to account for difference between make and sh variable
+        PLUG_SHARED="-shared -Wl,-expect_unresolved,'*'"
+        rm -f so_locations
+        ;;
+      Darwin)
+        # fix exe name for Makefiles
+        PLUG_SHARED='-bundle -bundle_loader $(GIST_EXE)'
+        ;;
+    esac
+    echo "DEFAULT_TGT=dll" >>Make.cfg
+  fi
+  if test "$LD_STATIC" = yes; then
+    ALT_LIBS='$(DIST_LIBS)'
+    IF_TGT='$(IF_EXE)'
+    echo "DISTRIB_TGT=exe" >>Make.cfg
+  else
+    echo 'DISTRIB_TGT=$(DEFAULT_TGT)' >>Make.cfg
+  fi
+  echo "ALT_LIBS=$ALT_LIBS" >>Make.cfg
+  echo "IF_TGT=$IF_TGT" >>Make.cfg
+
+  if test -z "$PLUG_PIC"; then
+    PLAY_PICS="\$(PLAY_OBJS)"
+  fi
+  cat >>Make.cfg <<EOF
+PLAY_DIRS=$PLAY_DIRS
+PLAY_INCS=$PLAY_INCS
+PLAY_CFG=$PLAY_CFG
+PLAY_OBJS=$PLAY_OBJS
+PLAY_PICS=$PLAY_PICS
+PLAY_WIN_H=$PLAY_WIN_H
+PLAY_MAIN_C=$PLAY_MAIN_C
+PLAY_MAIN_O=$PLAY_MAIN_O
+D_TIMEU=$D_TIMEU
+D_TIMEW=$D_TIMEW
+D_USERNM=$D_USERNM
+D_UINBG1=$D_UINBG1
+D_UINBG2=$D_UINBG2
+D_NO_PROCS=$D_NO_PROCS
+D_DIR1=$D_DIR1
+D_DIR2=$D_DIR2
+D_UEVENT=$D_UEVENT
+D_NO_SOCKETS=$D_NO_SOCKETS
+D_FPUSET=$D_FPUSET
+FPELIB=$FPELIB
+FPELIBM=$FPELIBM
+D_HAS_FENV_H=$D_HAS_FENV_H
+D_USE_SOFTFPE=$D_USE_SOFTFPE
+PLUG_UDL=$PLUG_UDL
+PLUG_EXPORT=$PLUG_EXPORT
+PLUG_LIB=$PLUG_LIB
+PLUG_PIC=$PLUG_PIC
+PLUG_SHARED=$PLUG_SHARED
+PLUG_SFX=$PLUG_SFX
+PLUG_DEF=$PLUG_DEF
+EOF
+
+  #----------------------------------------------------------------------
+
+  # clean up, issue warning if compiler gave fishy output
+  rm -f config.h config.o cfg cfg.c cfg.o
+  for f in cfg.[0-9]*; do
+    if grep ... $f >/dev/null 2>&1; then   # or use test -s $f ?
+      echo "WARNING - check compiler message in $f"
+    else # remove empty files
+      rm -f $f
+    fi
+  done
+
+  if test $fatality = 1; then
+    echo "*** at least one play/unix component could not be configured"
+    echo "*** see configuration notes in play/unix/README.cfg"
+  else
+    mv config.0h config.h
+    echo "wrote config.h, Make.cfg"
+  fi
+
+  echo ""
+  echo "  ============== end play/unix configuration =============="
+
+
+  if test "$x11" = "yes"; then
+
+    echo ""
+    echo "  ============= begin play/x11 configuration =============="
+    echo ""
+
+    log=cfg.20
+    # figure out directories to compile and load with X11
+    if test -z "$NO_XLIB"; then
+      if test -z "$X11BASE"; then
+        X11BASE=/no/suggested/x11dir
+      fi
+      # directory list is from autoconf, except openwin promoted near top
+      xlist=" \
+    $X11BASE/include           \
+    /usr/X11R6/include         \
+    /usr/X11R5/include         \
+    /usr/X11R4/include         \
+    /usr/include/X11R6         \
+    /usr/include/X11R5         \
+    /usr/include/X11R4         \
+    /usr/openwin/include       \
+    /usr/openwin/share/include \
+    /usr/local/X11R6/include   \
+    /usr/local/X11R5/include   \
+    /usr/local/X11R4/include   \
+    /usr/local/include/X11R6   \
+    /usr/local/include/X11R5   \
+    /usr/local/include/X11R4   \
+    /usr/X11/include           \
+    /usr/include/X11           \
+    /usr/local/X11/include     \
+    /usr/local/include/X11     \
+    /usr/X386/include          \
+    /usr/x386/include          \
+    /usr/XFree86/include/X11   \
+    /usr/include               \
+    /usr/local/include         \
+    /usr/unsupported/include   \
+    /usr/athena/include        \
+    /usr/local/x11r5/include   \
+    /usr/lpp/Xamples/include"
+
+      cat >cfg.c <<EOF
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
+#include <X11/cursorfont.h>
+extern XVisualInfo xvi;
+XVisualInfo xvi;             /* XVisualInfo declared in Xutil.h */
+int main(int argc, char *argv[])
+{
+  Display *dpy = XOpenDisplay("nosuchserver:0.0");
+  xvi.screen = XK_BackSpace;  /* XK_BackSpace defined in keysym.h */
+  xvi.red_mask = XA_PRIMARY;  /* XA_PRIMARY defined in Xatom.h */
+  xvi.depth = XC_crosshair;   /* XC_crosshair defined in cursorfont.h */
+  XCloseDisplay(dpy);
+  return 0;
+}
+EOF
+      xfound=no
+      xinc=
+      xlib=
+      xl64=
+      if test -n "$X11INC"; then
+        if test -r $X11INC/X11/Xlib.h; then
+          xinc=-I$X11INC
+          if $CC $CFLAGS $xinc -c cfg.c >${log}b 2>&1; then
+            xfound=yes
+            xlib=`echo -L$d | sed s/include/lib/`
+            xl64=`echo -L$d | sed s/include/lib64/`
+          else
+            fatal "unable to build with X11 headers in $X11INC"
+          fi
+        else
+          fatal "X11/Xlib.h missing from $X11INC"
+        fi
+      elif $CC $CFLAGS -c cfg.c >${log}a 2>&1; then
+        xfound=yes
+      else
+        for d in $xlist; do
+          if test -r $d/X11/Xlib.h; then
+            xinc=-I$d
+            if $CC $CFLAGS $xinc -c cfg.c >${log}b 2>&1; then
+              xfound=yes
+              xlib=`echo -L$d | sed s/include/lib/`
+              xl64=`echo -L$d | sed s/include/lib64/`
+              if test "x$debug" = "xno"; then rm -f ${log}a; fi
+            fi
+            break
+          fi
+        done
+        if test $xfound = no; then
+          fatal "unable to find X11 includes (play/x11)"
+        fi
+      fi
+      if test $xfound = yes; then
+        args="$CFLAGS $xinc $LDFLAGS -o cfg cfg.c"
+        if test -n "$X11LIB"; then
+          xlib=-L$X11LIB
+          if $CC $args $xlib -lX11 $LIBS >${log}c 2>&1; then
+            xfound=both
+          fi
+        elif $CC $args -lX11 $LIBS >${log}c 2>&1; then
+          xlib=
+          xfound=both
+        elif test -n "$xlib" && $CC $args $xlib -lX11 $LIBS >${log}c 2>&1; then
+          xfound=both
+        elif test -n "$xl64" && $CC $args $xl64 -lX11 $LIBS >${log}c 2>&1; then
+          xlib="$xl64"
+          xfound=both
+        else
+          for d0 in $xlist; do
+            for d1 in lib lib64; do
+              d=`echo $d0 | sed s/include/$d1/`
+              xall=`echo $d/libX11*`
+              if test "$xall" != $d/'libX11*'; then
+                xlib=-L$d
+                if $CC $args $xlib -lX11 $LIBS >${log}d 2>&1; then
+                  xfound=both
+                  if test "x$debug" = "xno"; then rm -f ${log}c; fi
+                  break
+                fi
+              fi
+            done
+            if test "$xfound" = both; then break; fi
+          done
+        fi
+      fi
+      if test $xfound = yes; then
+        fatal "unable to find X11 libraries (play/x11) $xlib"
+      else
+        echo "found X Window System, X11 headers and libraries"
+        echo "  - using X11 header switch ${xinc:-[none]}"
+        echo "  - using X11 loader switch ${xlib:-[none]}"
+      fi
+      cat >>Make.cfg <<EOF
+XINC=$xinc
+XLIB=$xlib
+X11LIB=\$(XLIB) -lX11
+EOF
+    fi
+
+    # clean up, issue warning if compiler gave fishy output
+    rm -f cfg cfg.exe cfg.c cfg.o
+    for f in cfg.[0-9]*; do
+      if grep ... $f >/dev/null 2>&1; then   # or use test -s $f ?
+        warn "check compiler message in $f"
+      else # remove empty files
+        rm -f $f
+      fi
+    done
+
+    echo "appended to Make.cfg"
+    echo ""
+    echo "  ============== end play/x11 configuration ==============="
+
+
+  fi
+fi
+
+$make directories
+
+exit $fatality

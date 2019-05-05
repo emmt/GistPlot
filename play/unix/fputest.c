@@ -82,7 +82,7 @@ main(int argc, char *argv[])
       }
     }
   }
-  exit(i? 2 : 0);
+  exit(i != 0 ? 2 : 0);
 }
 
 void
