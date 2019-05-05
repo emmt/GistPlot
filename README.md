@@ -1,7 +1,7 @@
 # Gist2 Library
 
 Gist2 is a library for scientific plotting based on the Gist part of
-[Yorick][yoric-url].  It is intended to be independent of Yorick and callable
+[Yorick][yorick-url].  It is intended to be independent of Yorick and callable
 from any software.  As Yorick, Gist2 is licensed under the [BSD
 license][license-url].
 
