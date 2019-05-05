@@ -1,7 +1,11 @@
 /*
- * $Id: hashtest.c,v 1.1 2005-09-18 22:05:44 dhmunro Exp $
- */
-/* Copyright (c) 2005, The Regents of the University of California.
+ * hashtest.c -
+ *
+ * Test hash functions.
+ *
+ *-----------------------------------------------------------------------------
+ *
+ * Copyright (c) 2005, The Regents of the University of California.
  * All rights reserved.
  * This file is part of yorick (http://yorick.sourceforge.net).
  * Read the accompanying LICENSE file for details.
@@ -10,6 +14,7 @@
 #include "play/hash.h"
 #include "play/std.h"
 #include "play/io.h"
+#include <stdio.h>
 #include <string.h>
 
 static int mxsyms = 50000;
@@ -135,7 +140,7 @@ main(int argc, char *argv[])
     }
   {
     extern int pl_id_collisions;
-    printf("hashtab: pl_id had %d collisions out of %d symbols",
+    printf("hashtab: pl_id had %d collisions out of %d symbols\n",
            pl_id_collisions, nsyms);
   }
 
