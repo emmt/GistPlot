@@ -32,13 +32,13 @@ info() { echo >&2 "$*"; }
 # Escape spaces in given path.
 quote() { echo "$*" | sed -e 's/ /\\ /g'; }
 
-valueofoption () { echo "$*" | sed -e 's/^--[^=]*=//'; }
-
 help () {
   cat <<EOF
-usage: $progname [-h|--help] ...
-options:
-  --prefix=PATH        Installation prefix [$prefix].
+Usage: $progname [OPTIONS ...]
+
+Configure for building Play and Gist libraries.
+
+Options:
   CC=COMMAND           C compiler [$CC], for instance:
                          CC='gcc -pipe'
   CFLAGS=FLAGS         Compiler and preprocessor flags [$CFLAGS], for instance:
@@ -47,8 +47,7 @@ options:
   AR=COMMAND           Archive command [$AR].
   RANLIB=COMMAND       Command to generate archive index [$RANLIB].
   MATHLIB=FLAGS        Linker flags for math library [$MATHLIB].
-  --deplibs=DEPLIBS    Flags for dependencies [$deplibs], for instance:
-                         --deplibs='-Lsomedir -lsomelib'
+  --prefix=PATH        Installation prefix [$prefix].
   --make=MAKE          Make command [$make].
   --shell=SHELL        Shell command [$shell].
   --debug              Turn debug mode on (for this script).
@@ -60,28 +59,6 @@ while test $# -ge 1; do
   arg=$1
   shift
   case "$arg" in
-    -h | --help )
-      help
-      exit 0
-      ;;
-    --debug )
-      debug=yes
-      ;;
-    --prefix=* )
-      prefix=$(echo "$arg" | sed -e 's/^CFLAGS=//')
-      ;;
-    --cflags=* )
-      cflags=$(valueofoption "$arg")
-      ;;
-    --deplibs=* )
-      deplibs=$(valueofoption "$arg")
-      ;;
-    --make=* )
-      make=$(valueofoption "$arg")
-      ;;
-    --shell=* )
-      shell=$(valueofoption "$arg")
-      ;;
     CC=* )
       CC=$(echo "$arg" | sed -e 's/^CC=//')
       ;;
@@ -99,6 +76,22 @@ while test $# -ge 1; do
       ;;
     MATHLIB=* )
       MATHLIB=$(echo "$arg" | sed -e 's/^MATHLIB=//')
+      ;;
+    -h | --help )
+      help
+      exit 0
+      ;;
+    --debug )
+      debug=yes
+      ;;
+    --prefix=* )
+      prefix=$(echo "$arg" | sed -e 's/^--prefix=//')
+      ;;
+    --make=* )
+      make=$(echo "$arg" | sed -e 's/^--make=//')
+      ;;
+    --shell=* )
+      shell=$(echo "$arg" | sed -e 's/^--shell=//')
       ;;
     * )
       die "Unknown option \"$arg\""
