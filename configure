@@ -12,6 +12,7 @@ debug=no
 prefix=/usr/local
 make=make
 shell=/bin/sh
+version=2.0.0
 
 on_exit () {
   if test $fatality = 0 -a "x$debug" = "xno"; then
@@ -279,7 +280,7 @@ if $CC $CFLAGS -o cfg cfg.c $LDFLAGS >${log}h 2>&1; then
   YWIN_LIB=exports.def
   YWIN_DEF='$(PKG_DEF)'
   arch=win32
-  x11=no
+  with_x11=no
   if test "$default_cc" = yes; then
     CC=gcc
   fi
@@ -319,12 +320,12 @@ else
     PLAY_PICS="\$(ANY_PICS) \$(UNIX_PICS)"
     PLAY_WIN_H="\$(srcdir)/play/x11/playwin.h"
     XDEFS="${XDEFS:+$XDEFS }-DNO_XLIB"
-    x11=no
+    with_x11=no
   else
     PLAY_OBJS="\$(ANY_OBJS) \$(UNIX_OBJS) \$(X11_OBJS)"
     PLAY_PICS="\$(ANY_PICS) \$(UNIX_PICS) \$(X11_PICS)"
     PLAY_WIN_H="\$(srcdir)/play/x11/playwin.h"
-    x11=yes
+    with_x11=yes
   fi
 fi
 if test "x$debug" = "xno"; then
@@ -975,7 +976,7 @@ EOF
   echo "  ============== end play/unix configuration =============="
 
 
-  if test "$x11" = "yes"; then
+  if test "$with_x11" = "yes"; then
 
     echo ""
     echo "  ============= begin play/x11 configuration =============="
@@ -1136,6 +1137,62 @@ EOF
 
   fi
 fi
+
+#------------------------------------------------------------------------
+# Build configuration files for pkg-config.
+
+mkdir -p pkgconfig
+
+url=https://github.com/emmt/Gist2
+libs=$MATHLIB
+if test -n "$PLUG_LIB"; then
+  libs="$libs $PLUG_LIB"
+fi
+if test -n "$FPELIBM"; then
+  libs="$FPELIBM $libs"
+fi
+if test -n "$FPELIB"; then
+  libs="$FPELIB $libs"
+fi
+cat >pkgconfig/playlib.pc <<EOF
+# pkg-config configuration for Play, the Portability LAYer library.
+prefix=$prefix
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: Play-library
+Description: Portability LAYer library
+Version: $version
+Libs: -L\${libdir} -lplay2
+URL: $url
+Libs.private: $libs
+Cflags: -I\${includedir}
+EOF
+
+if test "$with_x11" = "yes"; then
+  if test -n "$xlib"; then
+    libs="$xlib -lX11 $libs"
+  else
+    libs="-lX11 $libs"
+  fi
+fi
+cat >pkgconfig/gistlib.pc <<EOF
+# pkg-config configuration for Gist, the Yorick plotting library.
+prefix=$prefix
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: Gist-library
+Description: Yorick plotting library
+URL: $url
+Version: $version
+Requires: playlib
+Libs: -L\${libdir} -lgist2
+Libs.private: $libs
+Cflags: -I\${includedir}
+EOF
 
 $make directories
 

@@ -34,7 +34,8 @@ D_GISTPATH='-DGISTPATH="~/gist:~/Gist:$(GIST_SITE)"'
 main.o = obj/play/$(PLAY_MAIN_O)
 
 clean: Makefile
-	rm -f *~ libplay2.* libgist2.*
+	rm -f *~ libplay2.* libgist2.* gist
+	rm -f bench hahstest numfmt test2d test2d-shared
 	rm -f obj/*.o obj/*/*.o obj/*/*/*.o
 	rm -f pic/*.o pic/*/*.o pic/*/*/*.o
 
@@ -88,6 +89,14 @@ install: libplay2.a libplay2$(PLUG_SFX) libgist2.a libgist2$(PLUG_SFX) gist
 	  else \
 	    src="$$file"; \
 	  fi; \
+	  dst="$$dir/$$file"; \
+	  cp -p "$$src" "$$dst"; \
+	  chmod 644 "$$dst"; \
+	done; \
+	dir="$(DESTDIR)$(LIBDIR)/pkgconfig"; \
+	mkdir -p "$$dir"; \
+	for file in playlib.pc gistlib.pc; do \
+	  src="pkgconfig/$$file"; \
 	  dst="$$dir/$$file"; \
 	  cp -p "$$src" "$$dst"; \
 	  chmod 644 "$$dst"; \
